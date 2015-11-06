@@ -38,10 +38,12 @@ if open.__module__ == '__builtin__':
 def readResult(frd_input):
     frd_file = pyopen(frd_input, "r")
     nodes = {}
+    elements_hexa8 = {}
     elements_tetra10 = {}
     elements_tetra4 = {}
     elements_tria6 = {}
     elements_tria3 = {}
+    elements_seg2 = {}
     results = []
     mode_results = {}
     mode_disp = {}
@@ -73,6 +75,17 @@ def readResult(frd_input):
         if elements_found and (line[1:3] == "-1"):
             elem = int(line[4:13])
             elemType = int(line[14:18])
+        #then the 8 id's for the HEXA8 element
+        if elements_found and (line[1:3] == "-2") and elemType == 1:
+            node_id_5= int(line[3:13])
+            node_id_6 = int(line[13:23])
+            node_id_7 = int(line[23:33])
+            node_id_8 = int(line[33:43])
+            node_id_1 = int(line[43:53])
+            node_id_2 = int(line[53:63])
+            node_id_3 = int(line[63:73])
+            node_id_4 = int(line[73:83])
+            elements_hexa8[elem] = (node_id_1, node_id_2, node_id_3, node_id_4, node_id_5, node_id_6, node_id_7, node_id_8)
         #then the 10 id's for the TETRA10 element
         if elements_found and (line[1:3] == "-2") and elemType == 6:
             node_id_2 = int(line[3:13])
@@ -108,6 +121,11 @@ def readResult(frd_input):
             node_id_2 = int(line[13:23])
             node_id_3 = int(line[23:33])
             elements_tria3[elem] = (node_id_1, node_id_2, node_id_3)
+        #then the 2 id's for the SEG2 element
+        if elements_found and (line[1:3] == "-2") and elemType == 11:
+            node_id_1 = int(line[3:13])
+            node_id_2 = int(line[13:23])
+            elements_seg2[elem] = (node_id_1, node_id_2)
 
         #Check if we found new eigenmode
         if line[5:10] == "PMODE":
@@ -155,8 +173,8 @@ def readResult(frd_input):
             elements_found = False
 
     frd_file.close()
-    return {'Nodes': nodes, 'Tetra10Elem': elements_tetra10, 'Tetra4Elem': elements_tetra4,
-            'Tria6Elem': elements_tria6, 'Tria3Elem': elements_tria3, 'Results': results}
+    return {'Nodes': nodes, 'Hexa8Elem': elements_hexa8, 'Tetra10Elem': elements_tetra10, 'Tetra4Elem': elements_tetra4,
+            'Tria6Elem': elements_tria6, 'Tria3Elem': elements_tria3, 'Seg2Elem': elements_seg2, 'Results': results}
 
 
 def calculate_von_mises(i):
@@ -199,13 +217,17 @@ def importFrd(filename, Analysis=None):
             z_span = abs(p_z_max - p_z_min)
             span = max(x_span, y_span, z_span)
 
-        if (('Tetra10Elem' in m) or ('Tetra4Elem' in m) or ('Tria6Elem' in m) or ('Tria3Elem' in m)) and ('Nodes' in m) and (not Analysis):
+        if (('Hexa8Elem' in m) or ('Tetra10Elem' in m) or ('Tetra4Elem' in m) or ('Tria6Elem' in m) or ('Tria3Elem' in m) or ('Seg2Elem' in m)) and ('Nodes' in m) and (not Analysis):
             mesh = Fem.FemMesh()
             nds = m['Nodes']
 
             for i in nds:
                 n = nds[i]
                 mesh.addNode(n[0], n[1], n[2], i)
+            elms_hexa8 = m['Hexa8Elem']
+            for i in elms_hexa8:
+                e = elms_hexa8[i]
+                mesh.addVolume([e[0], e[1], e[2], e[3], e[4], e[5], e[6], e[7]], i)
             elms_tetra10 = m['Tetra10Elem']
             for i in elms_tetra10:
                 e = elms_tetra10[i]
@@ -222,6 +244,10 @@ def importFrd(filename, Analysis=None):
             for i in elms_tria3:
                 e = elms_tria3[i]
                 mesh.addFace([e[0], e[1], e[2]], i)
+            elms_seg2 = m['Seg2Elem']
+            for i in elms_seg2:
+                e = elms_seg2[i]
+                mesh.addEdge(e[0], e[1])
             if len(nds) > 0:
                 MeshObject = FreeCAD.ActiveDocument.addObject('Fem::FemMeshObject', 'ResultMesh')
                 MeshObject.FemMesh = mesh
