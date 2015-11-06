@@ -38,10 +38,10 @@ if open.__module__ == '__builtin__':
 def readResult(frd_input):
     frd_file = pyopen(frd_input, "r")
     nodes = {}
-    elements_tet10 = {}
-    elements_tet4 = {}
-    elements_tri6 = {}
-    elements_tri3 = {}
+    elements_tetra10 = {}
+    elements_tetra4 = {}
+    elements_tria6 = {}
+    elements_tria3 = {}
     results = []
     mode_results = {}
     mode_disp = {}
@@ -73,7 +73,7 @@ def readResult(frd_input):
         if elements_found and (line[1:3] == "-1"):
             elem = int(line[4:13])
             elemType = int(line[14:18])
-        #then the 10 id's for the Tet10 element
+        #then the 10 id's for the TETRA10 element
         if elements_found and (line[1:3] == "-2") and elemType == 6:
             node_id_2 = int(line[3:13])
             node_id_1 = int(line[13:23])
@@ -85,15 +85,15 @@ def readResult(frd_input):
             node_id_9 = int(line[73:83])
             node_id_8 = int(line[83:93])
             node_id_10 = int(line[93:103])
-            elements_tet10[elem] = (node_id_1, node_id_2, node_id_3, node_id_4, node_id_5, node_id_6, node_id_7, node_id_8, node_id_9, node_id_10)
-        #then the 4 id's for the Tet4 element
+            elements_tetra10[elem] = (node_id_1, node_id_2, node_id_3, node_id_4, node_id_5, node_id_6, node_id_7, node_id_8, node_id_9, node_id_10)
+        #then the 4 id's for the TETRA4 element
         if elements_found and (line[1:3] == "-2") and elemType == 3:
             node_id_2 = int(line[3:13])
             node_id_1 = int(line[13:23])
             node_id_3 = int(line[23:33])
             node_id_4 = int(line[33:43])                 # is there some logic that id's are 2, 1, 3, 4?
-            elements_tet4[elem] = (node_id_1, node_id_2, node_id_3, node_id_4)
-        #then the 6 id's for the Tri6 element
+            elements_tetra4[elem] = (node_id_1, node_id_2, node_id_3, node_id_4)
+        #then the 6 id's for the TRIA6 element
         if elements_found and (line[1:3] == "-2") and elemType == 8:
             node_id_1 = int(line[3:13])
             node_id_2 = int(line[13:23])
@@ -101,13 +101,13 @@ def readResult(frd_input):
             node_id_4 = int(line[33:43])
             node_id_5 = int(line[43:53])
             node_id_6 = int(line[53:63])
-            elements_tri6[elem] = (node_id_1, node_id_2, node_id_3, node_id_4, node_id_5, node_id_6)
-        #then the 3 id's for the Tri3 element
+            elements_tria6[elem] = (node_id_1, node_id_2, node_id_3, node_id_4, node_id_5, node_id_6)
+        #then the 3 id's for the TRIA3 element
         if elements_found and (line[1:3] == "-2") and elemType == 7:
             node_id_1 = int(line[3:13])
             node_id_2 = int(line[13:23])
             node_id_3 = int(line[23:33])
-            elements_tri3[elem] = (node_id_1, node_id_2, node_id_3)
+            elements_tria3[elem] = (node_id_1, node_id_2, node_id_3)
 
         #Check if we found new eigenmode
         if line[5:10] == "PMODE":
@@ -155,8 +155,8 @@ def readResult(frd_input):
             elements_found = False
 
     frd_file.close()
-    return {'Nodes': nodes, 'Tet10Elem': elements_tet10, 'Tet4Elem': elements_tet4,
-            'Tri6Elem': elements_tri6, 'Tri3Elem': elements_tri3, 'Results': results}
+    return {'Nodes': nodes, 'Tetra10Elem': elements_tetra10, 'Tetra4Elem': elements_tetra4,
+            'Tria6Elem': elements_tria6, 'Tria3Elem': elements_tria3, 'Results': results}
 
 
 def calculate_von_mises(i):
@@ -199,28 +199,28 @@ def importFrd(filename, Analysis=None):
             z_span = abs(p_z_max - p_z_min)
             span = max(x_span, y_span, z_span)
 
-        if (('Tet10Elem' in m) or ('Tet4Elem' in m) or ('Tri6Elem' in m) or ('Tri3Elem' in m)) and ('Nodes' in m) and (not Analysis):
+        if (('Tetra10Elem' in m) or ('Tetra4Elem' in m) or ('Tria6Elem' in m) or ('Tria3Elem' in m)) and ('Nodes' in m) and (not Analysis):
             mesh = Fem.FemMesh()
             nds = m['Nodes']
 
             for i in nds:
                 n = nds[i]
                 mesh.addNode(n[0], n[1], n[2], i)
-            elms_tet10 = m['Tet10Elem']
-            for i in elms_tet10:
-                e = elms_tet10[i]
+            elms_tetra10 = m['Tetra10Elem']
+            for i in elms_tetra10:
+                e = elms_tetra10[i]
                 mesh.addVolume([e[0], e[1], e[2], e[3], e[4], e[5], e[6], e[7], e[8], e[9]], i)
-            elms_tet4 = m['Tet4Elem']
-            for i in elms_tet4:
-                e = elms_tet4[i]
+            elms_tetra4 = m['Tetra4Elem']
+            for i in elms_tetra4:
+                e = elms_tetra4[i]
                 mesh.addVolume([e[0], e[1], e[2], e[3]], i)
-            elms_tri6 = m['Tri6Elem']
-            for i in elms_tri6:
-                e = elms_tri6[i]
+            elms_tria6 = m['Tria6Elem']
+            for i in elms_tria6:
+                e = elms_tria6[i]
                 mesh.addFace([e[0], e[1], e[2], e[3], e[4], e[5]], i)
-            elms_tri3 = m['Tri3Elem']
-            for i in elms_tri3:
-                e = elms_tri3[i]
+            elms_tria3 = m['Tria3Elem']
+            for i in elms_tria3:
+                e = elms_tria3[i]
                 mesh.addFace([e[0], e[1], e[2]], i)
             if len(nds) > 0:
                 MeshObject = FreeCAD.ActiveDocument.addObject('Fem::FemMeshObject', 'ResultMesh')
