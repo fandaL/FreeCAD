@@ -69,13 +69,10 @@ SOURCE_GROUP("Module" FILES ${Mod_SRCS})
 
 SET(FemScripts_SRCS
     convert2TetGen.py
+    ccxDatReader.py
     ccxFrdReader.py
     ccxInpWriter.py
     TestFem.py
-    FemShellThickness.py
-    FemShellThickness.ui
-    FemBeamSection.py
-    FemBeamSection.ui
     FemTools.py
     MechanicalAnalysis.ui
     MechanicalAnalysis.py
@@ -93,6 +90,20 @@ SET(FemScripts_SRCS
     _CommandMechanicalJobControl.py
     _CommandFemFromShape.py
     _CommandNewMechanicalAnalysis.py
+
+    _FemBeamSection.py
+    _ViewProviderFemBeamSection.py
+    FemBeamSection.py
+    _CommandFemBeamSection.py
+    _FemBeamSectionTaskPanel.py
+    FemBeamSection.ui
+
+    _FemShellThickness.py
+    _ViewProviderFemShellThickness.py
+    FemShellThickness.py
+    _CommandFemShellThickness.py
+    _FemShellThicknessTaskPanel.py
+    FemShellThickness.ui
 )
 #SOURCE_GROUP("Scripts" FILES ${FemScripts_SRCS})
 

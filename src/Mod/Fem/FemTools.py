@@ -134,10 +134,10 @@ class FemTools(QtCore.QRunnable, QtCore.QObject):
                     filtered_values.append(v)
         else:
             filtered_values = values
-        self.mesh.ViewObject.setNodeColorByScalars(self.result_object.ElementNumbers, filtered_values)
+        self.mesh.ViewObject.setNodeColorByScalars(self.result_object.NodeNumbers, filtered_values)
 
     def show_displacement(self, displacement_factor=0.0):
-        self.mesh.ViewObject.setNodeDisplacementByVectors(self.result_object.ElementNumbers,
+        self.mesh.ViewObject.setNodeDisplacementByVectors(self.result_object.NodeNumbers,
                                                           self.result_object.DisplacementVectors)
         self.mesh.ViewObject.applyDisplacement(displacement_factor)
 
@@ -287,7 +287,7 @@ class FemTools(QtCore.QRunnable, QtCore.QObject):
                 _number = self.analysis.NumberOfEigenmodes
             except:
                 #Not yet in prefs, so it will always default to 10
-                _number = self.fem_prefs.GetString("NumberOfEigenmodes", 10)
+                _number = self.fem_prefs.GetInteger("NumberOfEigenmodes", 10)
         if _number < 1:
             _number = 1
 
@@ -298,7 +298,7 @@ class FemTools(QtCore.QRunnable, QtCore.QObject):
                 _limit_low = self.analysis.EigenmodeLowLimit
             except:
                 #Not yet in prefs, so it will always default to 0.0
-                _limit_low = self.fem_prefs.GetString("EigenmodeLowLimit", 0.0)
+                _limit_low = self.fem_prefs.GetFloat("EigenmodeLowLimit", 0.0)
 
         if limit_high is not None:
             _limit_high = limit_high
@@ -307,7 +307,7 @@ class FemTools(QtCore.QRunnable, QtCore.QObject):
                 _limit_high = self.analysis.EigenmodeHighLimit
             except:
                 #Not yet in prefs, so it will always default to 1000000.0
-                _limit_high = self.fem_prefs.GetString("EigenmodeHighLimit", 1000000.0)
+                _limit_high = self.fem_prefs.GetFloat("EigenmodeHighLimit", 1000000.0)
         self.eigenmode_parameters = (_number, _limit_low, _limit_high)
 
     ## Sets base_name
@@ -421,6 +421,17 @@ class FemTools(QtCore.QRunnable, QtCore.QObject):
                 self.results_present = True
         else:
             raise Exception('FEM: No results found at {}!'.format(frd_result_file))
+
+        import ccxDatReader
+        dat_result_file = os.path.splitext(self.inp_file_name)[0] + '.dat'
+        if os.path.isfile(dat_result_file):
+            mode_frequencies = ccxDatReader.import_dat(dat_result_file, self.analysis)
+        else:
+            raise Exception('FEM: No .dat results found at {}!'.format(dat_result_file))
+        for m in self.analysis.Member:
+            if m.isDerivedFrom("Fem::FemResultObject") and m.Eigenmode > 0:
+                    m.EigenmodeFrequency = mode_frequencies[m.Eigenmode - 1]['frequency']
+                    m.setEditorMode("EigenmodeFrequency", 1)
 
     def use_results(self, results_name=None):
         for m in self.analysis.Member:
