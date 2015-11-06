@@ -91,9 +91,9 @@ def readResult(frd_input):
             node_id_2 = int(line[3:13])
             node_id_1 = int(line[13:23])
             node_id_3 = int(line[23:33])
-            node_id_4 = int(line[33:43])                 ###### is there some logic that id's are 2, 1, 3, 4?
+            node_id_4 = int(line[33:43])                 # is there some logic that id's are 2, 1, 3, 4?
             elements_tet4[elem] = (node_id_1, node_id_2, node_id_3, node_id_4)
-        #then the 6 id's for the Tri6 element            ###### this section added           
+        #then the 6 id's for the Tri6 element
         if elements_found and (line[1:3] == "-2") and elemType == 8:
             node_id_1 = int(line[3:13])
             node_id_2 = int(line[13:23])
@@ -102,7 +102,7 @@ def readResult(frd_input):
             node_id_5 = int(line[43:53])
             node_id_6 = int(line[53:63])
             elements_tri6[elem] = (node_id_1, node_id_2, node_id_3, node_id_4, node_id_5, node_id_6)
-        #then the 3 id's for the Tri3 element          
+        #then the 3 id's for the Tri3 element
         if elements_found and (line[1:3] == "-2") and elemType == 7:
             node_id_1 = int(line[3:13])
             node_id_2 = int(line[13:23])
@@ -155,8 +155,9 @@ def readResult(frd_input):
             elements_found = False
 
     frd_file.close()
-    return {'Nodes': nodes, 'Tet10Elem': elements_tet10, 'Tet4Elem': elements_tet4, 
+    return {'Nodes': nodes, 'Tet10Elem': elements_tet10, 'Tet4Elem': elements_tet4,
             'Tri6Elem': elements_tri6, 'Tri3Elem': elements_tri3, 'Results': results}
+
 
 def calculate_von_mises(i):
     # Von mises stress (http://en.wikipedia.org/wiki/Von_Mises_yield_criterion)
