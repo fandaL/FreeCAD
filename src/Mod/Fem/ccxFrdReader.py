@@ -41,6 +41,7 @@ def readResult(frd_input):
     elements_hexa8 = {}
     elements_tetra10 = {}
     elements_tetra4 = {}
+    elements_quad4 = {}
     elements_tria6 = {}
     elements_tria3 = {}
     elements_seg2 = {}
@@ -106,6 +107,13 @@ def readResult(frd_input):
             node_id_3 = int(line[23:33])
             node_id_4 = int(line[33:43])                 # is there some logic that id's are 2, 1, 3, 4?
             elements_tetra4[elem] = (node_id_1, node_id_2, node_id_3, node_id_4)
+        #then the 4 id's for the QUAD4 element
+        if elements_found and (line[1:3] == "-2") and elemType == 9:
+            node_id_1 = int(line[3:13])
+            node_id_2 = int(line[13:23])
+            node_id_3 = int(line[23:33])
+            node_id_4 = int(line[33:43])
+            elements_quad4[elem] = (node_id_1, node_id_2, node_id_3, node_id_4)
         #then the 6 id's for the TRIA6 element
         if elements_found and (line[1:3] == "-2") and elemType == 8:
             node_id_1 = int(line[3:13])
@@ -174,7 +182,7 @@ def readResult(frd_input):
 
     frd_file.close()
     return {'Nodes': nodes, 'Hexa8Elem': elements_hexa8, 'Tetra10Elem': elements_tetra10, 'Tetra4Elem': elements_tetra4,
-            'Tria6Elem': elements_tria6, 'Tria3Elem': elements_tria3, 'Seg2Elem': elements_seg2, 'Results': results}
+            'Quad4Elem': elements_quad4, 'Tria6Elem': elements_tria6, 'Tria3Elem': elements_tria3, 'Seg2Elem': elements_seg2, 'Results': results}
 
 
 def calculate_von_mises(i):
@@ -217,7 +225,7 @@ def importFrd(filename, Analysis=None):
             z_span = abs(p_z_max - p_z_min)
             span = max(x_span, y_span, z_span)
 
-        if (('Hexa8Elem' in m) or ('Tetra10Elem' in m) or ('Tetra4Elem' in m) or ('Tria6Elem' in m) or ('Tria3Elem' in m) or ('Seg2Elem' in m)) and ('Nodes' in m) and (not Analysis):
+        if (('Hexa8Elem' in m) or ('Tetra10Elem' in m) or ('Tetra4Elem' in m) or ('Quad4Elem' in m) or ('Tria6Elem' in m) or ('Tria3Elem' in m) or ('Seg2Elem' in m)) and ('Nodes' in m) and (not Analysis):
             mesh = Fem.FemMesh()
             nds = m['Nodes']
 
@@ -236,6 +244,10 @@ def importFrd(filename, Analysis=None):
             for i in elms_tetra4:
                 e = elms_tetra4[i]
                 mesh.addVolume([e[0], e[1], e[2], e[3]], i)
+            elms_quad4 = m['Quad4Elem']
+            for i in elms_quad4:
+                e = elms_quad4[i]
+                mesh.addFace([e[0], e[1], e[2], e[3]], i)
             elms_tria6 = m['Tria6Elem']
             for i in elms_tria6:
                 e = elms_tria6[i]
@@ -248,6 +260,8 @@ def importFrd(filename, Analysis=None):
             for i in elms_seg2:
                 e = elms_seg2[i]
                 mesh.addEdge(e[0], e[1])
+            print ("imported mesh: %d nodes, %d HEXA8, %d TETRA10, %d TETRA4, %d QUAD4, %d TRIA6, %d TRIA3, %d SEG2"
+                   %(len(nds), len(elms_hexa8), len(elms_tetra10), len(elms_tetra4), len(elms_quad4), len(elms_tria6), len(elms_tria3), len(elms_seg2)))
             if len(nds) > 0:
                 MeshObject = FreeCAD.ActiveDocument.addObject('Fem::FemMeshObject', 'ResultMesh')
                 MeshObject.FemMesh = mesh
