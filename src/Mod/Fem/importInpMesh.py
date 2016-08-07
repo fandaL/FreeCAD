@@ -31,6 +31,10 @@ __url__ = "http://www.freecadweb.org"
 __date__ = "04/08/2016"
 
 
+if open.__module__ == '__builtin__':
+    pyopen = open  # because we'll redefine open below 
+
+
 def read_inp(file_name):
     "read .inp file, currently only the mesh"
 
@@ -61,7 +65,7 @@ def read_inp(file_name):
             enode = int(line_list[en])
             elm_category[number].append(enode)
 
-    f = open(file_name, "r")
+    f = pyopen(file_name, "r")
     line = "\n"
     include = ""
     while line != "":
@@ -81,7 +85,7 @@ def read_inp(file_name):
             if line[:8].upper() == "*INCLUDE":
                 start = 1 + line.index("=")
                 include = line[start:].strip().strip('"')
-                f_include = open(include, "r")
+                f_include = pyopen(include, "r")
                 continue
 
             read_node = False
@@ -227,21 +231,27 @@ def read_inp(file_name):
             'Quad8Elem': elements.quad8, 'Seg2Elem': elements.seg2}  # , 'Seg3Elem': elements.seg3}
 
 
-def import_inp(file_name, docname):
+def import_inp(filename):
     "create imported objects in FreeCAD, currently only FemMesh"
 
-    m = read_inp(file_name)
+    m = read_inp(filename)
     mesh = FemMeshTools.make_femmesh(m)
-    mesh_object = FreeCAD.ActiveDocument.addObject('Fem::FemMeshObject', docname)
+    mesh_name = os.path.splitext(os.path.basename(filename))[0] 
+    mesh_object = FreeCAD.ActiveDocument.addObject('Fem::FemMeshObject', mesh_name)
     mesh_object.FemMesh = mesh
 
 
-def open_file(filename):
-    "open file to read a mesh"
-
-    docname = os.path.splitext(os.path.basename(filename))[0]
-    doc = FreeCAD.ActiveDocument
-    if not doc:
+def insert(filename, docname):
+    "called when freecad wants to import a file"
+    try:
+        doc = FreeCAD.getDocument(docname)
+    except NameError:
         doc = FreeCAD.newDocument(docname)
     FreeCAD.ActiveDocument = doc
-    import_inp(filename, docname)
+    import_inp(filename)
+
+
+def open(filename):
+    "called when freecad opens a file"
+    docname = os.path.splitext(os.path.basename(filename))[0]
+    insert(filename, docname)
