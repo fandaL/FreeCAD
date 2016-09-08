@@ -545,3 +545,6 @@ def open(filename):
     "called when freecad opens a file"
     docname = os.path.splitext(os.path.basename(filename))[0]
     insert(filename, docname)
+
+# git test
+# git test2
