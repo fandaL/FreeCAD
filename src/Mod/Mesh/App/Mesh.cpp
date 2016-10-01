@@ -107,7 +107,7 @@ unsigned long MeshObject::countSubElements(const char* Type) const
     return 0;
 }
 
-Data::Segment* MeshObject::getSubElement(const char* Type, unsigned long n) const
+Data::Segment* MeshObject::getSubElement(const char* Type, unsigned long /*n*/) const
 {
     //TODO
     std::string element(Type);
@@ -118,9 +118,9 @@ Data::Segment* MeshObject::getSubElement(const char* Type, unsigned long n) cons
     return 0;
 }
 
-void MeshObject::getFacesFromSubelement(const Data::Segment* segm,
+void MeshObject::getFacesFromSubelement(const Data::Segment* /*segm*/,
                                         std::vector<Base::Vector3d> &Points,
-                                        std::vector<Base::Vector3d> &PointNormals,
+                                        std::vector<Base::Vector3d> &/*PointNormals*/,
                                         std::vector<Facet> &faces) const
 {
     //TODO
@@ -255,7 +255,7 @@ MeshPoint MeshObject::getPoint(unsigned long index) const
 
 void MeshObject::getPoints(std::vector<Base::Vector3d> &Points,
                            std::vector<Base::Vector3d> &Normals,
-                           float Accuracy, uint16_t flags) const
+                           float /*Accuracy*/, uint16_t /*flags*/) const
 {
     Base::Matrix4D mat = _Mtrx;
 
@@ -289,7 +289,7 @@ Mesh::Facet MeshObject::getFacet(unsigned long index) const
 }
 
 void MeshObject::getFaces(std::vector<Base::Vector3d> &Points,std::vector<Facet> &Topo,
-                          float Accuracy, uint16_t flags) const
+                          float /*Accuracy*/, uint16_t /*flags*/) const
 {
     unsigned long ctpoints = _kernel.CountPoints();
     Points.reserve(ctpoints);
@@ -314,7 +314,7 @@ unsigned int MeshObject::getMemSize (void) const
     return _kernel.GetMemSize();
 }
 
-void MeshObject::Save (Base::Writer &writer) const
+void MeshObject::Save (Base::Writer &/*writer*/) const
 {
     // this is handled by the property class
 }
@@ -324,7 +324,7 @@ void MeshObject::SaveDocFile (Base::Writer &writer) const
     _kernel.Write(writer.Stream());
 }
 
-void MeshObject::Restore(Base::XMLReader &reader)
+void MeshObject::Restore(Base::XMLReader &/*reader*/)
 {
     // this is handled by the property class
 }
@@ -354,9 +354,22 @@ void MeshObject::save(const char* file, MeshCore::MeshIO::Format f,
         }
     }
     aWriter.SetGroups(groups);
+    if (mat && mat->library.empty()) {
+        Base::FileInfo fi(file);
+        const_cast<MeshCore::Material*>(mat)->library = fi.fileNamePure() + ".mtl";
+    }
 
     aWriter.Transform(this->_Mtrx);
-    aWriter.SaveAny(file, f);
+    if (aWriter.SaveAny(file, f)) {
+        if (mat && mat->binding == MeshCore::MeshIO::PER_FACE && f == MeshCore::MeshIO::OBJ) {
+            Base::FileInfo fi(file);
+            std::string fn = fi.dirPath() + "/" + mat->library;
+            fi.setFile(fn);
+            Base::ofstream str(fi, std::ios::out | std::ios::binary);
+            aWriter.SaveMTL(str);
+            str.close();
+        }
+    }
 }
 
 void MeshObject::save(std::ostream& str, MeshCore::MeshIO::Format f,
@@ -838,7 +851,7 @@ void MeshObject::offsetSpecial2(float fSize)
             }
         }
         
-        // if there no flipped triangels -> stop
+        // if there are no flipped triangles -> stop
         //int f =fliped.size();
         if (fliped.size() == 0)
             break;
@@ -1436,7 +1449,7 @@ MeshObject* MeshObject::createMeshFromList(Py::List& list)
     }
 
     Base::EmptySequencer seq;
-    std::auto_ptr<MeshObject> mesh(new MeshObject);
+    std::unique_ptr<MeshObject> mesh(new MeshObject);
     //mesh->addFacets(facets);
     mesh->getKernel() = facets;
     return mesh.release();
@@ -1606,6 +1619,7 @@ void MeshObject::addSegment(const Segment& s)
     addSegment(s.getIndices());
     this->_segments.back().setName(s.getName());
     this->_segments.back().save(s.isSaved());
+    this->_segments.back()._modifykernel = s._modifykernel;
 }
 
 void MeshObject::addSegment(const std::vector<unsigned long>& inds)
@@ -1645,7 +1659,7 @@ MeshObject* MeshObject::meshFromSegment(const std::vector<unsigned long>& indice
     return new MeshObject(kernel, _Mtrx);
 }
 
-std::vector<Segment> MeshObject::getSegmentsFromType(MeshObject::GeometryType type, const Segment& aSegment,
+std::vector<Segment> MeshObject::getSegmentsFromType(MeshObject::GeometryType type,
                                                      float dev, unsigned long minFacets) const
 {
     std::vector<Segment> segm;
@@ -1653,17 +1667,31 @@ std::vector<Segment> MeshObject::getSegmentsFromType(MeshObject::GeometryType ty
         return segm;
 
     MeshCore::MeshSegmentAlgorithm finder(this->_kernel);
-    MeshCore::MeshDistanceSurfaceSegment* surf;
-    surf = new MeshCore::MeshDistancePlanarSegment(this->_kernel, minFacets, dev);
-    std::vector<MeshCore::MeshSurfaceSegment*> surfaces;
-    surfaces.push_back(surf);
-    finder.FindSegments(surfaces);
-
-    const std::vector<MeshCore::MeshSegment>& data = surf->GetSegments();
-    for (std::vector<MeshCore::MeshSegment>::const_iterator it = data.begin(); it != data.end(); ++it) {
-        segm.push_back(Segment(const_cast<MeshObject*>(this), *it, false));
+    std::unique_ptr<MeshCore::MeshDistanceSurfaceSegment> surf;
+    switch (type) {
+    case PLANE:
+        surf.reset(new MeshCore::MeshDistancePlanarSegment(this->_kernel, minFacets, dev));
+        break;
+    // todo!
+    case CYLINDER:
+        break;
+    case SPHERE:
+        break;
+    default:
+        break;
     }
-    delete surf;
+
+    if (surf.get()) {
+        std::vector<MeshCore::MeshSurfaceSegment*> surfaces;
+        surfaces.push_back(surf.get());
+        finder.FindSegments(surfaces);
+
+        const std::vector<MeshCore::MeshSegment>& data = surf->GetSegments();
+        for (std::vector<MeshCore::MeshSegment>::const_iterator it = data.begin(); it != data.end(); ++it) {
+            segm.push_back(Segment(const_cast<MeshObject*>(this), *it, false));
+        }
+    }
+
     return segm;
 }
 

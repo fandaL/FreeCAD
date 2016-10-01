@@ -26,7 +26,6 @@
 #ifndef _PreComp_
 # include <cstdlib>
 # include <memory>
-# include <strstream>
 # include <Bnd_Box.hxx>
 # include <BRep_Tool.hxx>
 # include <BRepBndLib.hxx>
@@ -380,7 +379,7 @@ void FemMesh::compute()
     getGenerator()->Compute(*myMesh, myMesh->GetShapeToMesh());
 }
 
-std::set<long> FemMesh::getSurfaceNodes(long ElemId, short FaceId, float Angle) const
+std::set<long> FemMesh::getSurfaceNodes(long /*ElemId*/, short /*FaceId*/, float /*Angle*/) const
 {
     std::set<long> result;
     //const SMESHDS_Mesh* data = myMesh->GetMeshDS();
@@ -1261,19 +1260,8 @@ void FemMesh::SaveDocFile (Base::Writer &writer) const
 
     Base::ifstream file(fi, std::ios::in | std::ios::binary);
     if (file){
-        unsigned long ulSize = 0;
         std::streambuf* buf = file.rdbuf();
-        if (buf) {
-            unsigned long ulCurr;
-            ulCurr = buf->pubseekoff(0, std::ios::cur, std::ios::in);
-            ulSize = buf->pubseekoff(0, std::ios::end, std::ios::in);
-            buf->pubseekoff(ulCurr, std::ios::beg, std::ios::in);
-        }
-
-        // read in the ASCII file and write back to the stream
-        std::strstreambuf sbuf(ulSize);
-        file >> &sbuf;
-        writer.Stream() << &sbuf;
+        writer.Stream() << buf;
     }
 
     file.close();
@@ -1353,12 +1341,12 @@ std::vector<const char*> FemMesh::getElementTypes(void) const
     return temp;
 }
 
-unsigned long FemMesh::countSubElements(const char* Type) const
+unsigned long FemMesh::countSubElements(const char* /*Type*/) const
 {
     return 0;
 }
 
-Data::Segment* FemMesh::getSubElement(const char* Type, unsigned long n) const
+Data::Segment* FemMesh::getSubElement(const char* /*Type*/, unsigned long /*n*/) const
 {
     // FIXME implement subelement interface
     //std::stringstream str;

@@ -45,6 +45,7 @@
 #include <Mod/Part/App/FeatureFillet.h>
 #include <Mod/Part/App/FeatureChamfer.h>
 #include <Mod/Part/App/FeatureRevolution.h>
+#include <Mod/Part/App/FeatureOffset.h>
 #include <Mod/Part/App/PartFeatures.h>
 #include <Gui/Application.h>
 #include <Gui/Control.h>
@@ -191,13 +192,13 @@ bool ViewProviderMirror::onDelete(const std::vector<std::string> &)
     return true;
 }
 
-void ViewProviderMirror::dragStartCallback(void *data, SoDragger *)
+void ViewProviderMirror::dragStartCallback(void *, SoDragger *)
 {
     // This is called when a manipulator is about to manipulating
     Gui::Application::Instance->activeDocument()->openCommand("Edit Mirror");
 }
 
-void ViewProviderMirror::dragFinishCallback(void *data, SoDragger *)
+void ViewProviderMirror::dragFinishCallback(void *, SoDragger *)
 {
     // This is called when a manipulator has done manipulating
     Gui::Application::Instance->activeDocument()->commitCommand();
@@ -579,6 +580,11 @@ bool ViewProviderOffset::onDelete(const std::vector<std::string> &)
 
     return true;
 }
+
+// ---------------------------------------
+
+PROPERTY_SOURCE(PartGui::ViewProviderOffset2D, PartGui::ViewProviderOffset)
+
 
 // ---------------------------------------
 

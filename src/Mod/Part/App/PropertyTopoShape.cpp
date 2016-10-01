@@ -44,7 +44,6 @@
 #endif
 
 
-#include <strstream>
 #include <Base/Console.h>
 #include <Base/Writer.h>
 #include <Base/Reader.h>
@@ -312,20 +311,21 @@ void PropertyPartShape::SaveDocFile (Base::Writer &writer) const
             }
 
             Base::ifstream file(fi, std::ios::in | std::ios::binary);
-            if (file){
-                unsigned long ulSize = 0; 
+            if (file) {
+                //unsigned long ulSize = 0; 
                 std::streambuf* buf = file.rdbuf();
-                if (buf) {
-                    unsigned long ulCurr;
-                    ulCurr = buf->pubseekoff(0, std::ios::cur, std::ios::in);
-                    ulSize = buf->pubseekoff(0, std::ios::end, std::ios::in);
-                    buf->pubseekoff(ulCurr, std::ios::beg, std::ios::in);
-                }
+                //if (buf) {
+                //    unsigned long ulCurr;
+                //    ulCurr = buf->pubseekoff(0, std::ios::cur, std::ios::in);
+                //    ulSize = buf->pubseekoff(0, std::ios::end, std::ios::in);
+                //    buf->pubseekoff(ulCurr, std::ios::beg, std::ios::in);
+                //}
 
                 // read in the ASCII file and write back to the stream
-                std::strstreambuf sbuf(ulSize);
-                file >> &sbuf;
-                writer.Stream() << &sbuf;
+                //std::strstreambuf sbuf(ulSize);
+                //file >> &sbuf;
+                //writer.Stream() << &sbuf;
+                writer.Stream() << buf;
             }
 
             file.close();
@@ -431,23 +431,23 @@ PyObject *PropertyShapeHistory::getPyObject(void)
     return Py::new_reference_to(Py::None());
 }
 
-void PropertyShapeHistory::setPyObject(PyObject *value)
+void PropertyShapeHistory::setPyObject(PyObject *)
 {
 }
 
-void PropertyShapeHistory::Save (Base::Writer &writer) const
+void PropertyShapeHistory::Save (Base::Writer &) const
 {
 }
 
-void PropertyShapeHistory::Restore(Base::XMLReader &reader)
+void PropertyShapeHistory::Restore(Base::XMLReader &)
 {
 }
 
-void PropertyShapeHistory::SaveDocFile (Base::Writer &writer) const
+void PropertyShapeHistory::SaveDocFile (Base::Writer &) const
 {
 }
 
-void PropertyShapeHistory::RestoreDocFile(Base::Reader &reader)
+void PropertyShapeHistory::RestoreDocFile(Base::Reader &)
 {
 }
 

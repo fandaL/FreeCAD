@@ -59,6 +59,16 @@ using namespace MeshCore;
 namespace Mesh {
 class Module : public Py::ExtensionModule<Module>
 {
+    struct add_offset {
+        unsigned long i;
+        add_offset(unsigned long i) : i(i)
+        {
+        }
+        void operator()(unsigned long& v)
+        {
+            v += i;
+        }
+    };
 public:
     Module() : Py::ExtensionModule<Module>("Mesh")
     {
@@ -146,7 +156,7 @@ private:
         std::string EncodedName = std::string(Name);
         PyMem_Free(Name);
 
-        std::auto_ptr<MeshObject> mesh(new MeshObject);
+        std::unique_ptr<MeshObject> mesh(new MeshObject);
         mesh->load(EncodedName.c_str());
         return Py::asObject(new MeshPy(mesh.release()));
     }
@@ -173,7 +183,7 @@ private:
                     if (groupName.empty())
                         groupName = file.fileNamePure();
 
-                    std::auto_ptr<MeshObject> segm(mesh.meshFromSegment(group.getIndices()));
+                    std::unique_ptr<MeshObject> segm(mesh.meshFromSegment(group.getIndices()));
                     Mesh::Feature *pcFeature = static_cast<Mesh::Feature *>
                         (pcDoc->addObject("Mesh::Feature", groupName.c_str()));
                     pcFeature->Label.setValue(groupName.c_str());
@@ -238,7 +248,7 @@ private:
                     if (groupName.empty())
                         groupName = file.fileNamePure();
 
-                    std::auto_ptr<MeshObject> segm(mesh.meshFromSegment(group.getIndices()));
+                    std::unique_ptr<MeshObject> segm(mesh.meshFromSegment(group.getIndices()));
                     Mesh::Feature *pcFeature = static_cast<Mesh::Feature *>
                         (pcDoc->addObject("Mesh::Feature", groupName.c_str()));
                     pcFeature->Label.setValue(groupName.c_str());
@@ -307,13 +317,36 @@ private:
                     else
                         global_mesh.addMesh(kernel);
 
-                    // now create a segment for the added mesh
-                    std::vector<unsigned long> indices;
-                    indices.resize(global_mesh.countFacets() - countFacets);
-                    std::generate(indices.begin(), indices.end(), Base::iotaGen<unsigned long>(countFacets));
-                    Segment segm(&global_mesh, indices, true);
-                    segm.setName(obj->Label.getValue());
-                    global_mesh.addSegment(segm);
+                    // if the mesh already has persistent segments then use them instead
+                    unsigned long numSegm = mesh.countSegments();
+                    unsigned long canSave = 0;
+                    for (unsigned long i=0; i<numSegm; i++) {
+                        if (mesh.getSegment(i).isSaved())
+                            canSave++;
+                    }
+
+                    if (canSave > 0) {
+                        for (unsigned long i=0; i<numSegm; i++) {
+                            const Segment& segm = mesh.getSegment(i);
+                            if (segm.isSaved()) {
+                                std::vector<unsigned long> indices = segm.getIndices();
+                                std::for_each(indices.begin(), indices.end(), add_offset(countFacets));
+                                Segment new_segm(&global_mesh, indices, true);
+                                new_segm.setName(segm.getName());
+                                global_mesh.addSegment(new_segm);
+                            }
+                        }
+
+                    }
+                    else {
+                        // now create a segment for the added mesh
+                        std::vector<unsigned long> indices;
+                        indices.resize(global_mesh.countFacets() - countFacets);
+                        std::generate(indices.begin(), indices.end(), Base::iotaGen<unsigned long>(countFacets));
+                        Segment segm(&global_mesh, indices, true);
+                        segm.setName(obj->Label.getValue());
+                        global_mesh.addSegment(segm);
+                    }
                 }
                 else if (obj->getTypeId().isDerivedFrom(partId)) {
                     App::Property* shape = obj->getPropertyByName("Shape");
@@ -415,7 +448,7 @@ private:
         TriaList.push_back(MeshCore::MeshGeomFacet(Base::Vector3f(-hx, -hy, 0.0),Base::Vector3f(hx, hy, 0.0),Base::Vector3f(-hx, hy, 0.0)));
         TriaList.push_back(MeshCore::MeshGeomFacet(Base::Vector3f(-hx, -hy, 0.0),Base::Vector3f(hx, -hy, 0.0),Base::Vector3f(hx, hy, 0.0)));
 
-        std::auto_ptr<MeshObject> mesh(new MeshObject);
+        std::unique_ptr<MeshObject> mesh(new MeshObject);
         mesh->addFacets(TriaList);
         return Py::asObject(new MeshPy(mesh.release()));
     }

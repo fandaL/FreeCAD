@@ -244,6 +244,9 @@ class _Equipment(ArchComponent.Component):
         self.Type = "Equipment"
         obj.Role = Roles
         obj.Proxy = self
+        obj.setEditorMode("VerticalArea",2)
+        obj.setEditorMode("HorizontalArea",2)
+        obj.setEditorMode("PerimeterLength",2)
 
     def onChanged(self,obj,prop):
         self.hideSubobjects(obj,prop)
@@ -283,6 +286,9 @@ class _Equipment(ArchComponent.Component):
                     base = self.processSubShapes(obj,base,pl)
                     self.applyShape(obj,base,pl,allowinvalid=False,allownosolid=True)
 
+    def computeAreas(self,obj):
+        return
+
 
 class _ViewProviderEquipment(ArchComponent.ViewProviderComponent):
     "A View Provider for the Equipment object"
@@ -292,7 +298,33 @@ class _ViewProviderEquipment(ArchComponent.ViewProviderComponent):
 
     def getIcon(self):
         import Arch_rc
+        if hasattr(self,"Object"):
+            if hasattr(self.Object,"CloneOf"):
+                if self.Object.CloneOf:
+                    return ":/icons/Arch_Equipment_Clone.svg"
         return ":/icons/Arch_Equipment_Tree.svg"
+
+    def attach(self, vobj):
+        from pivy import coin
+        sep = coin.SoSeparator()
+        self.coords = coin.SoCoordinate3()
+        sep.addChild(self.coords)
+        self.coords.point.deleteValues(0)
+        symbol = coin.SoMarkerSet()
+        symbol.markerIndex = coin.SoMarkerSet.CIRCLE_FILLED_5_5
+        sep.addChild(symbol)
+        rn = vobj.RootNode
+        rn.addChild(sep)
+        ArchComponent.ViewProviderComponent.attach(self,vobj)
+        
+        
+    def updateData(self, obj, prop):
+        if prop == "SnapPoints":
+            if obj.SnapPoints:
+                self.coords.point.setNum(len(obj.SnapPoints))
+                self.coords.point.setValues([[p.x,p.y,p.z] for p in obj.SnapPoints])
+            else:
+                self.coords.point.deleteValues(0)
 
 
 if FreeCAD.GuiUp:

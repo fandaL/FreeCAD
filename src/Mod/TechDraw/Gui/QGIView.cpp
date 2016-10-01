@@ -38,7 +38,6 @@
 #include <QStyleOptionGraphicsItem>
 #include <QTextOption>
 #include <QTransform>
-#include <strstream>
 #endif
 
 #include <App/Application.h>
@@ -100,9 +99,9 @@ void QGIView::alignTo(QGraphicsItem*item, const QString &alignment)
 
 QVariant QGIView::itemChange(GraphicsItemChange change, const QVariant &value)
 {
+    QPointF newPos(0.0,0.0);
     if(change == ItemPositionChange && scene()) {
-        QPointF newPos = value.toPointF();
-
+        newPos = value.toPointF();
         if(locked){
             newPos.setX(pos().x());
             newPos.setY(pos().y());
@@ -163,6 +162,7 @@ void QGIView::mouseMoveEvent(QGraphicsSceneMouseEvent * event)
 void QGIView::mouseReleaseEvent(QGraphicsSceneMouseEvent * event)
 {
     if(!locked && isSelected()) {
+        getViewObject()->setMouseMove(true);
         if (!isInnerView()) {
             double tempX = x(),
                    tempY = getY();
@@ -172,12 +172,14 @@ void QGIView::mouseReleaseEvent(QGraphicsSceneMouseEvent * event)
             getViewObject()->X.setValue(x());
             getViewObject()->Y.setValue(getYInClip(y()));
         }
+        getViewObject()->setMouseMove(false);
     }
     QGraphicsItem::mouseReleaseEvent(event);
 }
 
 void QGIView::hoverEnterEvent(QGraphicsSceneHoverEvent *event)
 {
+    Q_UNUSED(event);
     // TODO don't like this but only solution at the minute (MLP)
     if (isSelected()) {
         m_colCurrent = getSelectColor();
@@ -193,6 +195,7 @@ void QGIView::hoverEnterEvent(QGraphicsSceneHoverEvent *event)
 
 void QGIView::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
 {
+    Q_UNUSED(event);
     if(isSelected()) {
         m_colCurrent = getSelectColor();
     } else {
@@ -342,7 +345,7 @@ void QGIView::drawBorder()
                               frameWidth,
                               frameHeight);
     prepareGeometryChange();
-    m_border->setRect(frameArea);
+    m_border->setRect(frameArea.adjusted(-2,-2,2,2));
     m_border->setPos(0.,0.);
 
     m_label->show();
@@ -359,7 +362,7 @@ void QGIView::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, Q
 
 QRectF QGIView::customChildrenBoundingRect() {
     QList<QGraphicsItem*> children = childItems();
-    int dimItemType = QGraphicsItem::UserType + 106;  // TODO: Magic number warning. make include file for custom types?
+    int dimItemType = QGraphicsItem::UserType + 106;  // TODO: Magic number warning.
     int borderItemType = QGraphicsItem::UserType + 136;  // TODO: Magic number warning
     int labelItemType = QGraphicsItem::UserType + 135;  // TODO: Magic number warning
     QRectF result;

@@ -33,7 +33,6 @@
 #include <QPainterPathStroker>
 #include <QPainter>
 #include <QTextOption>
-#include <strstream>
 #endif
 
 #include <qmath.h>
@@ -80,6 +79,7 @@ void QGIViewSection::drawSectionFace()
         QGIFace* newFace = drawFace(*fit,-1);  //TODO: do we need to know which sectionFace this QGIFace came from?
         newFace->setZValue(ZVALUE::SECTIONFACE);
         newFace->setFill(faceColor, Qt::SolidPattern);
+        newFace->setDrawEdges(false);
         newFace->setPrettyNormal();
         newFace->setAcceptHoverEvents(false);
         newFace->setFlag(QGraphicsItem::ItemIsSelectable, false);
@@ -100,4 +100,10 @@ void QGIViewSection::updateView(bool update)
     } else {
         QGIViewPart::updateView();
     }
+}
+
+void QGIViewSection::drawSectionLine(bool b)
+{
+    Q_UNUSED(b);
+   //override QGIVP::drawSectionLine
 }

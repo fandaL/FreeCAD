@@ -414,6 +414,8 @@ class _CommandWindow:
                     if obj.Support:
                         if isinstance(obj.Support,tuple):
                             host = obj.Support[0]
+                        elif isinstance(obj.Support,list):
+                            host = obj.Support[0][0]
                         else:
                             host = obj.Support
                         obj.Support = None # remove
@@ -811,6 +813,10 @@ class _ViewProviderWindow(ArchComponent.ViewProviderComponent):
 
     def getIcon(self):
         import Arch_rc
+        if hasattr(self,"Object"):
+            if hasattr(self.Object,"CloneOf"):
+                if self.Object.CloneOf:
+                    return ":/icons/Arch_Window_Clone.svg"
         return ":/icons/Arch_Window_Tree.svg"
 
     def updateData(self,obj,prop):

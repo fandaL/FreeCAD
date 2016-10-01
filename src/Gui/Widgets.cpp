@@ -70,8 +70,9 @@ CommandIconView::~CommandIconView ()
 /**
  * Stores the name of the selected commands for drag and drop. 
  */
-void CommandIconView::startDrag ( Qt::DropActions supportedActions )
+void CommandIconView::startDrag (Qt::DropActions supportedActions)
 {
+    Q_UNUSED(supportedActions);
     QList<QListWidgetItem*> items = selectedItems();
     QByteArray itemData;
     QDataStream dataStream(&itemData, QIODevice::WriteOnly);
@@ -284,6 +285,7 @@ void ActionSelector::onCurrentItemChanged(QTreeWidgetItem*, QTreeWidgetItem*)
 
 void ActionSelector::onItemDoubleClicked(QTreeWidgetItem * item, int column)
 {
+    Q_UNUSED(column);
     QTreeWidget* treeWidget = item->treeWidget();
     if (treeWidget == availableWidget) {
         int index = availableWidget->indexOfTopLevelItem(item);
@@ -1197,6 +1199,8 @@ LabelEditor::LabelEditor (QWidget * parent)
 
     connect(lineEdit, SIGNAL(textChanged(const QString &)),
             this, SIGNAL(textChanged(const QString &)));
+    connect(lineEdit, SIGNAL(textChanged(const QString &)),
+            this, SLOT(validateText(const QString &)));
 
     button = new QPushButton(QLatin1String("..."), this);
     button->setFixedWidth(2*button->fontMetrics().width(QLatin1String(" ... ")));
@@ -1221,7 +1225,7 @@ void LabelEditor::setText(const QString& s)
     this->plainText = s;
 
     QStringList list = this->plainText.split(QString::fromLatin1("\n"));
-    QString text = QString::fromUtf8("[%1]").arg(list.join(QLatin1String(",")));
+    QString text = QString::fromLatin1("[%1]").arg(list.join(QLatin1String(",")));
     lineEdit->setText(text);
 }
 
@@ -1245,9 +1249,18 @@ void LabelEditor::changeText()
         this->plainText = inputText;
 
         QStringList list = this->plainText.split(QString::fromLatin1("\n"));
-        QString text = QString::fromUtf8("[%1]").arg(list.join(QLatin1String(",")));
+        QString text = QString::fromLatin1("[%1]").arg(list.join(QLatin1String(",")));
         lineEdit->setText(text);
     }
+}
+
+/**
+ * Validates if the input of the lineedit is a valid list.
+ */
+void LabelEditor::validateText(const QString& s)
+{
+    if ( s.startsWith(QLatin1String("[")) && s.endsWith(QLatin1String("]")) )
+        this->plainText = s.mid(1,s.size()-2).replace(QLatin1String(","),QLatin1String("\n"));
 }
 
 /**

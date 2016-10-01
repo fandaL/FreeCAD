@@ -206,6 +206,7 @@ Py::Object PythonWrapper::fromQWidget(QWidget* widget, const char* className)
     }
     throw Py::RuntimeError("Failed to wrap widget");
 #else
+    Q_UNUSED(className);
     Py::Module sipmod(PyImport_AddModule((char*)"sip"));
     Py::Callable func = sipmod.getDict().getItem("wrapinstance");
     Py::Tuple arguments(2);
@@ -260,6 +261,9 @@ void PythonWrapper::createChildrenNameAttributes(PyObject* root, QObject* object
         }
         createChildrenNameAttributes(root, child);
     }
+#else
+    Q_UNUSED(root);
+    Q_UNUSED(object);
 #endif
 }
 
@@ -270,6 +274,9 @@ void PythonWrapper::setParent(PyObject* pyWdg, QObject* parent)
         Shiboken::AutoDecRef pyParent(Shiboken::Conversions::pointerToPython((SbkObjectType*)SbkPySide_QtGuiTypes[SBK_QWIDGET_IDX], parent));
         Shiboken::Object::setParent(pyParent, pyWdg);
     }
+#else
+    Q_UNUSED(pyWdg);
+    Q_UNUSED(parent);
 #endif
 }
 
@@ -560,7 +567,7 @@ QWidget* UiLoader::createWidget(const QString & className, QWidget * parent,
 
 // ----------------------------------------------------
 
-PyObject *UiLoaderPy::PyMake(struct _typeobject *type, PyObject * args, PyObject * kwds)
+PyObject *UiLoaderPy::PyMake(struct _typeobject * /*type*/, PyObject * args, PyObject * /*kwds*/)
 {
     if (!PyArg_ParseTuple(args, ""))
         return 0;
@@ -1167,7 +1174,7 @@ Py::Object PyResource::setValue(const Py::Tuple& args)
 /**
  * If any resouce has been loaded this methods shows it as a modal dialog.
  */
-Py::Object PyResource::show(const Py::Tuple& args)
+Py::Object PyResource::show(const Py::Tuple&)
 {
     if (myDlg) {
         // small trick to get focus

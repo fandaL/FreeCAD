@@ -27,6 +27,7 @@
 #endif
 
 #include "FemResultObject.h"
+#include <App/FeaturePythonPyImp.h>
 #include <App/DocumentObjectPy.h>
 
 using namespace Fem;
@@ -51,6 +52,7 @@ FemResultObject::FemResultObject()
     ADD_PROPERTY_TYPE(Eigenmode,(0), "Fem",Prop_None,"Number of the eigenmode");
     ADD_PROPERTY_TYPE(EigenmodeFrequency,(0), "Fem",Prop_None,"Frequency of the eigenmode");
     ADD_PROPERTY_TYPE(Time,(0), "Fem",Prop_None,"Time of analysis incement");
+    ADD_PROPERTY_TYPE(UserDefined,(0), "Fem",Prop_None,"User Defined Results");
 
     // make read-only for property editor
     NodeNumbers.setStatus(App::Property::ReadOnly, true);
@@ -66,6 +68,7 @@ FemResultObject::FemResultObject()
     Eigenmode.setStatus(App::Property::ReadOnly, true);
     EigenmodeFrequency.setStatus(App::Property::ReadOnly, true);
     Time.setStatus(App::Property::ReadOnly, true);
+    UserDefined.setStatus(App::Property::ReadOnly, false);
 }
 
 FemResultObject::~FemResultObject()
@@ -92,9 +95,17 @@ namespace App {
 /// @cond DOXERR
 PROPERTY_SOURCE_TEMPLATE(Fem::FemResultObjectPython, Fem::FemResultObject)
 template<> const char* Fem::FemResultObjectPython::getViewProviderName(void) const {
-    return "FemGui::ViewProviderFemResultPython";
+    return "FemGui::ViewProviderResultPython";
 }
 /// @endcond
+
+template<> PyObject* Fem::FemResultObjectPython::getPyObject(void) {
+    if (PythonObject.is(Py::_None())) {
+        // ref counter is set to 1
+        PythonObject = Py::Object(new App::FeaturePythonPyT<App::DocumentObjectPy>(this),true);
+    }
+    return Py::new_reference_to(PythonObject);
+}
 
 // explicit template instantiation
 template class AppFemExport FeaturePythonT<Fem::FemResultObject>;

@@ -35,6 +35,7 @@
 #include "PropertyFemMeshItem.h"
 #include "DlgSettingsFemGeneralImp.h"
 #include "DlgSettingsFemCcxImp.h"
+#include "DlgSettingsFemZ88Imp.h"
 #include "ViewProviderFemMesh.h"
 #include "ViewProviderFemMeshShape.h"
 #include "ViewProviderFemMeshShapeNetgen.h"
@@ -58,6 +59,7 @@
 #include "ViewProviderFemConstraintInitialTemperature.h"
 #include "ViewProviderFemConstraintPlaneRotation.h"
 #include "ViewProviderFemConstraintContact.h"
+#include "ViewProviderFemConstraintTransform.h"
 #include "ViewProviderResult.h"
 #include "Workbench.h"
 
@@ -129,6 +131,7 @@ PyMODINIT_FUNC initFemGui()
     FemGui::ViewProviderFemConstraintInitialTemperature  ::init();
     FemGui::ViewProviderFemConstraintPlaneRotation::init();
     FemGui::ViewProviderFemConstraintContact      ::init();
+    FemGui::ViewProviderFemConstraintTransform    ::init();
     FemGui::ViewProviderResult                    ::init();
     FemGui::ViewProviderResultPython              ::init();
     FemGui::PropertyFemMeshItem                   ::init();
@@ -150,6 +153,7 @@ PyMODINIT_FUNC initFemGui()
     // register preferences pages
     new Gui::PrefPageProducer<FemGui::DlgSettingsFemGeneralImp> (QT_TRANSLATE_NOOP("QObject","FEM"));
     new Gui::PrefPageProducer<FemGui::DlgSettingsFemCcxImp> (QT_TRANSLATE_NOOP("QObject","FEM"));
+    new Gui::PrefPageProducer<FemGui::DlgSettingsFemZ88Imp> (QT_TRANSLATE_NOOP("QObject","FEM"));
 
      // add resources and reloads the translators
     loadFemResource();

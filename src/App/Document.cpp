@@ -2135,6 +2135,10 @@ void Document::_remObject(DocumentObject* pcObject)
             d->activeUndoTransaction->addObjectNew(pcObject);
         }
     }
+    else {
+        // for a rollback delete the object
+        signalTransactionRemove(*pcObject, 0);
+    }
 
     // remove from map
     d->objectMap.erase(pos);
@@ -2144,6 +2148,11 @@ void Document::_remObject(DocumentObject* pcObject)
             d->objectArray.erase(it);
             break;
         }
+    }
+
+    // for a rollback delete the object
+    if (d->rollback) {
+        delete pcObject;
     }
 }
 
@@ -2308,11 +2317,12 @@ DocumentObject * Document::getObject(const char *Name) const
 }
 
 // Note: This method is only used in Tree.cpp slotChangeObject(), see explanation there
-const bool Document::isIn(const DocumentObject *pFeat) const
+bool Document::isIn(const DocumentObject *pFeat) const
 {
-    for (std::map<std::string,DocumentObject*>::const_iterator o = d->objectMap.begin(); o != d->objectMap.end(); o++)
+    for (std::map<std::string,DocumentObject*>::const_iterator o = d->objectMap.begin(); o != d->objectMap.end(); ++o) {
         if (o->second == pFeat)
             return true;
+    }
 
     return false;
 }
@@ -2321,9 +2331,10 @@ const char * Document::getObjectName(DocumentObject *pFeat) const
 {
     std::map<std::string,DocumentObject*>::const_iterator pos;
 
-    for (pos = d->objectMap.begin();pos != d->objectMap.end();++pos)
+    for (pos = d->objectMap.begin();pos != d->objectMap.end();++pos) {
         if (pos->second == pFeat)
             return pos->first.c_str();
+    }
 
     return 0;
 }

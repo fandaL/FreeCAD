@@ -600,7 +600,7 @@ def getMovableChildren(objectslist,recursive=True):
                 added.extend(getMovableChildren(children))
     return added
 
-def makeCircle(radius, placement=None, face=True, startangle=None, endangle=None, support=None):
+def makeCircle(radius, placement=None, face=None, startangle=None, endangle=None, support=None):
     '''makeCircle(radius,[placement,face,startangle,endangle])
     or makeCircle(edge,[face]):
     Creates a circle object with given radius. If placement is given, it is
@@ -616,7 +616,8 @@ def makeCircle(radius, placement=None, face=True, startangle=None, endangle=None
         n = "Circle"
     obj = FreeCAD.ActiveDocument.addObject("Part::Part2DObjectPython",n)
     _Circle(obj)
-    #obj.MakeFace = face
+    if face != None:
+        obj.MakeFace = face
     if isinstance(radius,Part.Edge):
         edge = radius
         if DraftGeomUtils.geomType(edge) == "Circle":
@@ -647,7 +648,7 @@ def makeCircle(radius, placement=None, face=True, startangle=None, endangle=None
     FreeCAD.ActiveDocument.recompute()
     return obj
 
-def makeRectangle(length, height, placement=None, face=True, support=None):
+def makeRectangle(length, height, placement=None, face=None, support=None):
     '''makeRectangle(length,width,[placement],[face]): Creates a Rectangle
     object with length in X direction and height in Y direction.
     If a placement is given, it is used. If face is False, the
@@ -659,7 +660,8 @@ def makeRectangle(length, height, placement=None, face=True, support=None):
     obj.Length = length
     obj.Height = height
     obj.Support = support
-    #obj.MakeFace = face
+    if face != None:
+        obj.MakeFace = face
     if placement: obj.Placement = placement
     if gui:
         _ViewProviderRectangle(obj.ViewObject)
@@ -805,7 +807,7 @@ def makeWire(pointslist,closed=False,placement=None,face=None,support=None):
     FreeCAD.ActiveDocument.recompute()
     return obj
 
-def makePolygon(nfaces,radius=1,inscribed=True,placement=None,face=True,support=None):
+def makePolygon(nfaces,radius=1,inscribed=True,placement=None,face=None,support=None):
     '''makePolgon(nfaces,[radius],[inscribed],[placement],[face]): Creates a
     polygon object with the given number of faces and the radius.
     if inscribed is False, the polygon is circumscribed around a circle
@@ -817,7 +819,8 @@ def makePolygon(nfaces,radius=1,inscribed=True,placement=None,face=True,support=
     _Polygon(obj)
     obj.FacesNumber = nfaces
     obj.Radius = radius
-    #obj.MakeFace = face
+    if face != None:
+        obj.MakeFace = face
     if inscribed:
         obj.DrawMode = "inscribed"
     else:
@@ -836,7 +839,7 @@ def makeLine(p1,p2):
     obj = makeWire([p1,p2])
     return obj
 
-def makeBSpline(pointslist,closed=False,placement=None,face=True,support=None):
+def makeBSpline(pointslist,closed=False,placement=None,face=None,support=None):
     '''makeBSpline(pointslist,[closed],[placement]): Creates a B-Spline object
     from the given list of vectors. If closed is True or first
     and last points are identical, the wire is closed. If face is
@@ -868,7 +871,8 @@ def makeBSpline(pointslist,closed=False,placement=None,face=True,support=None):
     obj.Closed = closed
     obj.Points = pointslist
     obj.Support = support
-    #obj.MakeFace = face
+    if face != None:
+        obj.MakeFace = face
     if placement: obj.Placement = placement
     if gui:
         _ViewProviderWire(obj.ViewObject)
@@ -877,7 +881,7 @@ def makeBSpline(pointslist,closed=False,placement=None,face=True,support=None):
     FreeCAD.ActiveDocument.recompute()
     return obj
 
-def makeBezCurve(pointslist,closed=False,placement=None,face=True,support=None,Degree=None):
+def makeBezCurve(pointslist,closed=False,placement=None,face=None,support=None,Degree=None):
     '''makeBezCurve(pointslist,[closed],[placement]): Creates a Bezier Curve object
     from the given list of vectors.   Instead of a pointslist, you can also pass a Part Wire.'''
     if not isinstance(pointslist,list):
@@ -899,7 +903,8 @@ def makeBezCurve(pointslist,closed=False,placement=None,face=True,support=None,D
             Part.BezierCurve().MaxDegree)
     obj.Closed = closed
     obj.Support = support
-    #obj.MakeFace = face
+    if face != None:
+        obj.MakeFace = face
     obj.Proxy.resetcontinuity(obj)
     if placement: obj.Placement = placement
     if gui:
@@ -1712,13 +1717,22 @@ def getDXF(obj,direction=None):
     return result
 
 
-def getSVG(obj,scale=1,linewidth=0.35,fontsize=12,fillstyle="shape color",direction=None,linestyle=None,color=None,linespacing=None):
+def getSVG(obj,scale=1,linewidth=0.35,fontsize=12,fillstyle="shape color",direction=None,linestyle=None,color=None,linespacing=None,techdraw=False):
     '''getSVG(object,[scale], [linewidth],[fontsize],[fillstyle],[direction],[linestyle],[color],[linespacing]):
     returns a string containing a SVG representation of the given object,
     with the given linewidth and fontsize (used if the given object contains
     any text). You can also supply an arbitrary projection vector. the
     scale parameter allows to scale linewidths down, so they are resolution-independant.'''
+    
+    # if this is a group, gather all the svg views of its children
+    if obj.isDerivedFrom("App::DocumentObjectGroup"):
+        svg = ""
+        for child in obj.Group:
+            svg += getSVG(child,scale,linewidth,fontsize,fillstyle,direction,linestyle,color,linespacing,techdraw)
+        return svg
+    
     import Part, DraftGeomUtils
+    pathdata = []
     svg = ""
     linewidth = float(linewidth)/scale
     fontsize = (float(fontsize)/scale)/2
@@ -1726,6 +1740,7 @@ def getSVG(obj,scale=1,linewidth=0.35,fontsize=12,fillstyle="shape color",direct
         linespacing = float(linespacing)/scale
     else:
         linespacing = 0.5
+    #print obj.Label," line spacing ",linespacing,"scale ",scale
     pointratio = .75 # the number of times the dots are smaller than the arrow size
     plane = None
     if direction:
@@ -1737,7 +1752,10 @@ def getSVG(obj,scale=1,linewidth=0.35,fontsize=12,fillstyle="shape color",direct
             plane = direction
     stroke = "#000000"
     if color:
-        stroke = getrgb(color)
+        if "#" in color:
+            stroke = color
+        else:
+            stroke = getrgb(color)
     elif gui:
         if hasattr(obj.ViewObject,"LineColor"):
             stroke = getrgb(obj.ViewObject.LineColor)
@@ -1745,12 +1763,26 @@ def getSVG(obj,scale=1,linewidth=0.35,fontsize=12,fillstyle="shape color",direct
     def getLineStyle():
         "returns a linestyle"
         p = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Draft")
+        l = None
         if linestyle == "Dashed":
-            return p.GetString("svgDashedLine","0.09,0.05")
+            l = p.GetString("svgDashedLine","0.09,0.05")
         elif linestyle == "Dashdot":
-            return p.GetString("svgDashdotLine","0.09,0.05,0.02,0.05")
+            l = p.GetString("svgDashdotLine","0.09,0.05,0.02,0.05")
         elif linestyle == "Dotted":
-            return p.GetString("svgDottedLine","0.02,0.02")
+            l = p.GetString("svgDottedLine","0.02,0.02")
+        elif linestyle:
+            if "," in linestyle:
+                l = linestyle
+        if l:
+            l = l.split(",")
+            try:
+                # scale dashes
+                l = ",".join([str(float(d)/scale) for d in l])
+                #print "lstyle ",l
+            except:
+                return "none"
+            else:
+                return l
         return "none"
 
     def getProj(vec):
@@ -1761,6 +1793,8 @@ def getSVG(obj,scale=1,linewidth=0.35,fontsize=12,fillstyle="shape color",direct
         ny = DraftVecUtils.project(vec,plane.v)
         ly = ny.Length
         if abs(ny.getAngle(plane.v)) > 0.1: ly = -ly
+        if techdraw:
+            ly = -ly
         return Vector(lx,ly,0)
 
     def getPattern(pat):
@@ -1785,6 +1819,7 @@ def getSVG(obj,scale=1,linewidth=0.35,fontsize=12,fillstyle="shape color",direct
                 w1.fixWire()
                 egroups.append(Part.__sortEdges__(w1.Edges))
         for egroupindex, edges in enumerate(egroups):
+            edata = ""
             vs=() #skipped for the first edge
             for edgeindex,e in enumerate(edges):
                 previousvs = vs
@@ -1795,7 +1830,7 @@ def getSVG(obj,scale=1,linewidth=0.35,fontsize=12,fillstyle="shape color",direct
                         vs.reverse()
                 if edgeindex == 0:
                     v = getProj(vs[0].Point)
-                    svg += 'M '+ str(v.x) +' '+ str(v.y) + ' '
+                    edata += 'M '+ str(v.x) +' '+ str(v.y) + ' '
                 else:
                     if (vs[0].Point-previousvs[-1].Point).Length > 1e-6:
                         raise ValueError('edges not ordered')
@@ -1841,13 +1876,13 @@ def getSVG(obj,scale=1,linewidth=0.35,fontsize=12,fillstyle="shape color",direct
                              == (e.LastParameter > e.FirstParameter)
                     #        == (e.Orientation == "Forward")
                     for v in endpoints:
-                        svg += 'A %s %s %s %s %s %s %s ' % \
+                        edata += 'A %s %s %s %s %s %s %s ' % \
                                 (str(rx),str(ry),str(rot),\
                                 str(int(flag_large_arc)),\
                                 str(int(flag_sweep)),str(v.x),str(v.y))
                 elif DraftGeomUtils.geomType(e) == "Line":
                     v = getProj(vs[-1].Point)
-                    svg += 'L '+ str(v.x) +' '+ str(v.y) + ' '
+                    edata += 'L '+ str(v.x) +' '+ str(v.y) + ' '
                 else:
                     bspline=e.Curve.toBSpline(e.FirstParameter,e.LastParameter)
                     if bspline.Degree > 3 or bspline.isRational():
@@ -1860,21 +1895,28 @@ def getSVG(obj,scale=1,linewidth=0.35,fontsize=12,fillstyle="shape color",direct
                             if bezierseg.Degree>3: #should not happen
                                 raise AssertionError
                             elif bezierseg.Degree==1:
-                                svg +='L '
+                                edata +='L '
                             elif bezierseg.Degree==2:
-                                svg +='Q '
+                                edata +='Q '
                             elif bezierseg.Degree==3:
-                                svg +='C '
+                                edata +='C '
                             for pole in bezierseg.getPoles()[1:]:
                                 v = getProj(pole)
-                                svg += str(v.x) +' '+ str(v.y) + ' '
+                                edata += str(v.x) +' '+ str(v.y) + ' '
                     else:
                         print("Debug: one edge (hash ",e.hashCode(),\
                                 ") has been discretized with parameter 0.1")
                         for linepoint in bspline.discretize(0.1)[1:]:
                             v = getProj(linepoint)
-                            svg += 'L '+ str(v.x) +' '+ str(v.y) + ' '
-            if fill != 'none': svg += 'Z '
+                            edata += 'L '+ str(v.x) +' '+ str(v.y) + ' '
+            if fill != 'none': 
+                edata += 'Z '
+            if edata in pathdata:
+                # do not draw a path on another identical path
+                return ""
+            else:
+                svg += edata
+                pathdata.append(edata)
         svg += '" '
         svg += 'stroke="' + stroke + '" '
         svg += 'stroke-width="' + str(linewidth) + ' px" '
@@ -1955,41 +1997,53 @@ def getSVG(obj,scale=1,linewidth=0.35,fontsize=12,fillstyle="shape color",direct
             anchor = "start"
         else:
             anchor = "end"
-        svg = '<text fill="'
-        svg += color +'" font-size="'
-        svg += str(fontsize) + '" '
-        svg += 'style="text-anchor:'+anchor+';text-align:'+align.lower()+';'
-        svg += 'font-family:'+ fontname +'" '
-        svg += 'transform="rotate('+str(math.degrees(angle))
-        svg += ','+ str(base.x) + ',' + str(base.y) + ') '
-        if flip:
-            svg += 'translate(' + str(base.x) + ',' + str(base.y) + ') '
-        else:
-            svg += 'translate(' + str(base.x) + ',' + str(-base.y) + ') '
-        #svg += 'scale('+str(tmod/2000)+',-'+str(tmod/2000)+') '
-        if flip:
-            svg += 'scale(1,-1) '
-        else:
-            svg += 'scale(1,1) '
-        svg += '" freecad:skip="1"'
-        svg += '>\n'
-        if len(text) == 1:
-            try:
-                svg += text[0]
-            except:
-                svg += text[0].decode("utf8")
-        else:
+        if techdraw:
+            svg = ""
             for i in range(len(text)):
-                if i == 0:
-                    svg += '<tspan>'
-                else:
-                    svg += '<tspan x="0" dy="'+str(linespacing)+'">'
+                svg += '<text fill="' + color +'" font-size="' + str(fontsize) + '" '
+                svg += 'style="text-anchor:'+anchor+';text-align:'+align.lower()+';'
+                svg += 'font-family:'+ fontname +'" '
+                svg += 'transform="rotate('+str(math.degrees(angle))
+                svg += ','+ str(base.x) + ',' + str(base.y+linespacing*i) + ') '
+                svg += 'translate(' + str(base.x) + ',' + str(base.y+linespacing*i) + ') '
+                svg += '" freecad:skip="1"'
+                svg += '>\n' + text[i] + '</text>\n'            
+        else:            
+            svg = '<text fill="'
+            svg += color +'" font-size="'
+            svg += str(fontsize) + '" '
+            svg += 'style="text-anchor:'+anchor+';text-align:'+align.lower()+';'
+            svg += 'font-family:'+ fontname +'" '
+            svg += 'transform="rotate('+str(math.degrees(angle))
+            svg += ','+ str(base.x) + ',' + str(base.y) + ') '
+            if flip:
+                svg += 'translate(' + str(base.x) + ',' + str(base.y) + ') '
+            else:
+                svg += 'translate(' + str(base.x) + ',' + str(-base.y) + ') '
+            #svg += 'scale('+str(tmod/2000)+',-'+str(tmod/2000)+') '
+            if flip and (not techdraw):
+                svg += 'scale(1,-1) '
+            else:
+                svg += 'scale(1,1) '
+            svg += '" freecad:skip="1"'
+            svg += '>\n'
+            if len(text) == 1:
                 try:
-                    svg += text[i]
+                    svg += text[0]
                 except:
-                    svg += text[i].decode("utf8")
-                svg += '</tspan>\n'
-        svg += '</text>\n'
+                    svg += text[0].decode("utf8")
+            else:
+                for i in range(len(text)):
+                    if i == 0:
+                        svg += '<tspan>'
+                    else:
+                        svg += '<tspan x="0" dy="'+str(linespacing)+'">'
+                    try:
+                        svg += text[i]
+                    except:
+                        svg += text[i].decode("utf8")
+                    svg += '</tspan>\n'
+            svg += '</text>\n'
         return svg
 
 
@@ -2222,10 +2276,19 @@ def getSVG(obj,scale=1,linewidth=0.35,fontsize=12,fillstyle="shape color",direct
                                 (obj.Name,i))
         else:
             # closed circle or spline
-            if isinstance(obj.Shape.Edges[0].Curve,Part.Circle):
-                svg = getCircle(obj.Shape.Edges[0])
-            else:
-                svg = getPath(obj.Shape.Edges)
+            if obj.Shape.Edges:
+                if isinstance(obj.Shape.Edges[0].Curve,Part.Circle):
+                    svg = getCircle(obj.Shape.Edges[0])
+                else:
+                    svg = getPath(obj.Shape.Edges)
+        if FreeCAD.GuiUp:
+            if hasattr(obj.ViewObject,"EndArrow") and hasattr(obj.ViewObject,"ArrowType") and (len(obj.Shape.Vertexes) > 1):
+                if obj.ViewObject.EndArrow:
+                    p1 = getProj(obj.Shape.Vertexes[-2].Point)
+                    p2 = getProj(obj.Shape.Vertexes[-1].Point)
+                    angle = -DraftVecUtils.angle(p2.sub(p1))
+                    arrowsize = obj.ViewObject.ArrowSize.Value/pointratio
+                    svg += getArrow(obj.ViewObject.ArrowType,p2,arrowsize,stroke,linewidth,angle)
     return svg
 
 def getrgb(color,testbw=True):
@@ -4522,8 +4585,11 @@ class _ViewProviderWire(_ViewProviderDraft):
                     self.coords.scaleFactor.setValue((s,s,s))
                     rn.addChild(self.pt)
                 else:
-                    self.pt.removeChild(self.symbol)
-                    rn.removeChild(self.pt)
+                    if self.symbol:
+                        if self.pt.findChild(self.symbol) != -1:
+                            self.pt.removeChild(self.symbol)
+                        if rn.findChild(self.pt) != -1:
+                            rn.removeChild(self.pt)
         _ViewProviderDraft.onChanged(self,vobj,prop)
         return
 
@@ -5341,11 +5407,14 @@ class _Clone(_DraftObject):
                 if hasattr(obj,"Scale") and not sh.isNull():
                     sx,sy,sz = obj.Scale
                     if not DraftVecUtils.equals(obj.Scale,Vector(1,1,1)):
+                        op = sh.Placement
+                        sh.Placement = FreeCAD.Placement()
                         m.scale(obj.Scale)
                         if sx == sy == sz:
                             sh.transformShape(m)
                         else:
                             sh = sh.transformGeometry(m)
+                        sh.Placement = op
                 if not sh.isNull():
                     shapes.append(sh)
         if shapes:

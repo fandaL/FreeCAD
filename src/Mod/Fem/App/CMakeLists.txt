@@ -21,6 +21,7 @@ include_directories(
     ${ZLIB_INCLUDE_DIR}
     ${XercesC_INCLUDE_DIRS}
     ${SMESH_INCLUDE_DIR}
+    ${NETGEN_INCLUDE_DIRS}
     ${VTK_INCLUDE_DIR}
 )
 
@@ -77,6 +78,7 @@ SET(FemScripts_SRCS
     _CommandConstraintSelfWeight.py
     _CommandMechanicalMaterial.py
     _CommandShowResult.py
+    _CommandMaterialMechanicalNonlinear.py
     _CommandMeshFromShape.py
     _CommandPurgeResults.py
     _CommandRunSolver.py
@@ -85,6 +87,7 @@ SET(FemScripts_SRCS
     _CommandSolverZ88.py
     _FemBeamSection.py
     _FemConstraintSelfWeight.py
+    _FemMaterialMechanicalNonlinear.py
     _FemShellThickness.py
     _FemSolverCalculix.py
     _FemSolverZ88.py
@@ -96,6 +99,7 @@ SET(FemScripts_SRCS
     _TaskPanelShowResult.py
     _ViewProviderFemBeamSection.py
     _ViewProviderFemConstraintSelfWeight.py
+    _ViewProviderFemMaterialMechanicalNonlinear.py
     _ViewProviderFemShellThickness.py
     _ViewProviderFemSolverCalculix.py
     _ViewProviderFemSolverZ88.py
@@ -114,6 +118,7 @@ SET(FemScripts_SRCS
     FemInputWriter.py
     FemInputWriterCcx.py
     FemInputWriterZ88.py
+    FemMaterialMechanicalNonlinear.py
     FemMeshTools.py
     FemShellThickness.py
     FemSolverCalculix.py
@@ -218,6 +223,8 @@ SET(FemConstraints_SRCS
     FemConstraintPlaneRotation.h
     FemConstraintContact.cpp
     FemConstraintContact.h
+    FemConstraintTransform.cpp
+    FemConstraintTransform.h
     )
 SOURCE_GROUP("Constraints" FILES ${FemConstraints_SRCS})
 
