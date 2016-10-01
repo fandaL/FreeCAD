@@ -26,7 +26,6 @@
 # include <sstream>
 #endif
 
-#include <strstream>
 #include <Base/Console.h>
 #include <Base/Writer.h>
 
@@ -57,8 +56,8 @@ DrawProjGroupItem::DrawProjGroupItem(void)
     ADD_PROPERTY(Type, ((long)0));
 
     //projection group controls these
-    Direction.setStatus(App::Property::Hidden,true);
-    XAxisDirection.setStatus(App::Property::Hidden,true);
+    Direction.setStatus(App::Property::ReadOnly,true);
+    XAxisDirection.setStatus(App::Property::ReadOnly,true);
     Scale.setStatus(App::Property::ReadOnly,true);
     ScaleType.setStatus(App::Property::ReadOnly,true);
 }
@@ -72,14 +71,14 @@ short DrawProjGroupItem::mustExecute() const
 
 void DrawProjGroupItem::onChanged(const App::Property *prop)
 {
-    TechDraw::DrawViewPart::onChanged(prop);
-
     //TODO: Should we allow changes to the Type here?  Seems that should be handled through DrawProjGroup
     if (prop == &Type && Type.isTouched()) {
         if (!isRestoring()) {
             execute();
         }
     }
+
+    TechDraw::DrawViewPart::onChanged(prop);
 
 }
 
@@ -89,8 +88,8 @@ DrawProjGroupItem::~DrawProjGroupItem()
 
 void DrawProjGroupItem::onDocumentRestored()
 {
-    // Rebuild the view
-    execute();
+    setAutoPos(false);                        //if restoring from file, use X,Y from file, not auto!
+    DrawProjGroupItem::execute();
 }
 
 

@@ -1,6 +1,7 @@
 /***************************************************************************
  *   Copyright (c) Jürgen Riegel          (juergen.riegel@web.de) 2007     *
  *   Copyright (c) Luke Parry             (l.parry@warwick.ac.uk) 2013     *
+ *   Copyright (c) WandererFan            (wandererfan@gmail.com) 2016     *
  *                                                                         *
  *   This file is part of the FreeCAD CAx development system.              *
  *                                                                         *
@@ -47,18 +48,17 @@ class Face;
 
 namespace TechDraw {
 class DrawHatch;
-struct WalkerEdge;
 }
 
 namespace TechDraw
 {
+class DrawViewSection;
 
 class TechDrawExport DrawViewPart : public DrawView
 {
     PROPERTY_HEADER(TechDraw::DrawViewPart);
 
 public:
-    /// Constructor
     DrawViewPart(void);
     virtual ~DrawViewPart();
 
@@ -73,6 +73,14 @@ public:
     App::PropertyBool   ShowCenters;
     App::PropertyFloat  CenterScale;
     App::PropertyFloatConstraint  Tolerance;
+    App::PropertyBool   HorizCenterLine;
+    App::PropertyBool   VertCenterLine;
+
+    App::PropertyBool   ShowSectionLine;
+    App::PropertyBool   HorizSectionLine;     //true(horiz)/false(vert)
+    App::PropertyBool   ArrowUpSection;       //true(up/right)/false(down/left)
+    App::PropertyString SymbolSection;
+
 
     std::vector<TechDraw::DrawHatch*> getHatches(void) const;
 
@@ -86,12 +94,20 @@ public:
     TechDrawGeometry::BaseGeom* getProjEdgeByIndex(int idx) const;               //get existing geom for edge idx in projection
     TechDrawGeometry::Vertex* getProjVertexByIndex(int idx) const;               //get existing geom for vertex idx in projection
     std::vector<TechDrawGeometry::BaseGeom*> getProjFaceByIndex(int idx) const;  //get edges for face idx in projection
+
     virtual Base::BoundBox3d getBoundingBox() const;
     double getBoxX(void) const;
     double getBoxY(void) const;
     virtual QRectF getRect() const;
+    virtual DrawViewSection* getSectionRef() const;                    //is there a ViewSection based on this ViewPart?
+    const Base::Vector3d& getUDir(void) const {return uDir;}                       //paperspace X
+    const Base::Vector3d& getVDir(void) const {return vDir;}                       //paperspace Y
+    const Base::Vector3d& getWDir(void) const {return wDir;}                       //paperspace Z
+    const Base::Vector3d& getCentroid(void) const {return shapeCentroid;}
+    Base::Vector3d getValidXDir() const;
+    Base::Vector3d projectPoint(const Base::Vector3d& pt) const;
 
-    short mustExecute() const;
+    virtual short mustExecute() const;
 
     /** @name methods overide Feature */
     //@{
@@ -106,31 +122,26 @@ public:
     //return PyObject as DrawViewPartPy
     virtual PyObject *getPyObject(void);
 
-    void dumpVertexes(const char* text, const TopoDS_Shape& s);
-    void dumpEdge(char* label, int i, TopoDS_Edge e);
-    void dump1Vertex(const char* label, const TopoDS_Vertex& v);
-
 protected:
     TechDrawGeometry::GeometryObject *geometryObject;
     Base::BoundBox3d bbox;
 
     void onChanged(const App::Property* prop);
-    Base::Vector3d getValidXDir() const;
     void buildGeometryObject(TopoDS_Shape shape, gp_Pnt& center);
     void extractFaces();
-    std::vector<TopoDS_Wire> sortWiresBySize(std::vector<TopoDS_Wire>& w, bool reverse = false);
-    class wireCompare;
 
     bool isOnEdge(TopoDS_Edge e, TopoDS_Vertex v, bool allowEnds = false);
     std::vector<TopoDS_Edge> splitEdge(std::vector<TopoDS_Vertex> splitPoints, TopoDS_Edge e);
-    double simpleMinDist(TopoDS_Shape s1, TopoDS_Shape s2);
-    bool isSamePoint(TopoDS_Vertex v1, TopoDS_Vertex v2);
-    int findUniqueVert(TopoDS_Vertex vx, std::vector<TopoDS_Vertex> &uniqueVert);
-    std::vector<TopoDS_Vertex> makeUniqueVList(std::vector<TopoDS_Edge> edges);
-    std::vector<WalkerEdge>    makeWalkerEdges(std::vector<TopoDS_Edge> edges,
-                                               std::vector<TopoDS_Vertex> verts);
-    TopoDS_Wire makeCleanWire(std::vector<TopoDS_Edge> edges, double tol = 0.10);
+    double simpleMinDist(TopoDS_Shape s1, TopoDS_Shape s2) const;   //probably sb static or DrawUtil
 
+    //Projection parameter space
+    void saveParamSpace(const Base::Vector3d& direction,
+                        const Base::Vector3d& xAxis);
+    Base::Vector3d uDir;                       //paperspace X
+    Base::Vector3d vDir;                       //paperspace Y
+    Base::Vector3d wDir;                       //paperspace Z
+    Base::Vector3d shapeCentroid;
+    int m_interAlgo;
 
 private:
     static App::PropertyFloatConstraint::Constraints floatRange;

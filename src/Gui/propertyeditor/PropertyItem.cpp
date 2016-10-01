@@ -36,6 +36,7 @@
 
 #include <Base/Tools.h>
 #include <Base/Console.h>
+#include <Base/Interpreter.h>
 #include <App/Application.h>
 #include <App/Document.h>
 #include <App/DocumentObject.h>
@@ -44,6 +45,7 @@
 #include <App/PropertyUnits.h>
 #include <Gui/Application.h>
 #include <Gui/Control.h>
+#include <Gui/Command.h>
 #include <Gui/Document.h>
 #include <Gui/Selection.h>
 #include <Gui/ViewProviderDocumentObject.h>
@@ -53,7 +55,7 @@
 #include <Gui/QuantitySpinBox.h>
 
 #include "PropertyItem.h"
-#include <SpinBox.h>
+#include <Gui/SpinBox.h>
 
 using namespace Gui::PropertyEditor;
 
@@ -252,7 +254,10 @@ int PropertyItem::decimals() const
 
 QVariant PropertyItem::toolTip(const App::Property* prop) const
 {
-    return QVariant(QString::fromUtf8(prop->getDocumentation()));
+    QString str = QApplication::translate("App::Property",
+                                          prop->getDocumentation(),
+                                          0, QApplication::UnicodeUTF8);
+    return QVariant(str);
 }
 
 QVariant PropertyItem::decoration(const QVariant&) const
@@ -290,7 +295,7 @@ QString PropertyItem::pythonIdentifier(const App::Property* prop) const
         QString objName = QString::fromLatin1(obj->getNameInDocument());
         QString propName = QString::fromLatin1(parent->getPropertyName(prop));
         return QString::fromLatin1("FreeCAD.getDocument(\"%1\").getObject(\"%2\").%3")
-            .arg(docName).arg(objName).arg(propName);
+            .arg(docName).arg(objName).arg(propName);
     }
     if (parent->getTypeId().isDerivedFrom(Gui::ViewProviderDocumentObject::getClassTypeId())) {
         App::DocumentObject* obj = static_cast<Gui::ViewProviderDocumentObject*>(parent)->getObject();
@@ -299,7 +304,7 @@ QString PropertyItem::pythonIdentifier(const App::Property* prop) const
         QString objName = QString::fromLatin1(obj->getNameInDocument());
         QString propName = QString::fromLatin1(parent->getPropertyName(prop));
         return QString::fromLatin1("FreeCADGui.getDocument(\"%1\").getObject(\"%2\").%3")
-            .arg(docName).arg(objName).arg(propName);
+            .arg(docName).arg(objName).arg(propName);
     }
     return QString();
 }
@@ -350,7 +355,19 @@ void PropertyItem::setPropertyValue(const QString& value)
         App::PropertyContainer* parent = (*it)->getContainer();
         if (parent && !parent->isReadOnly(*it) && !(*it)->testStatus(App::Property::ReadOnly)) {
             QString cmd = QString::fromLatin1("%1 = %2").arg(pythonIdentifier(*it)).arg(value);
-            Gui::Application::Instance->runPythonCode((const char*)cmd.toUtf8());
+            try {
+                Gui::Command::runCommand(Gui::Command::App, cmd.toUtf8());
+            }
+            catch (Base::PyException &e) {
+                e.ReportException();
+                Base::Console().Error("Stack Trace: %s\n",e.getStackTrace().c_str());
+            }
+            catch (Base::Exception &e) {
+                e.ReportException();
+            }
+            catch (...) {
+                Base::Console().Error("Unknown C++ exception in PropertyItem::setPropertyValue thrown\n");
+            }
         }
     }
 }
@@ -557,6 +574,9 @@ TYPESYSTEM_SOURCE(Gui::PropertyEditor::PropertySeparatorItem, Gui::PropertyEdito
 
 QWidget* PropertySeparatorItem::createEditor(QWidget* parent, const QObject* receiver, const char* method) const
 {
+    Q_UNUSED(parent); 
+    Q_UNUSED(receiver); 
+    Q_UNUSED(method); 
     return 0;
 }
 

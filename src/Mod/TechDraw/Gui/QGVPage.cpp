@@ -34,10 +34,11 @@
 # include <QPaintEvent>
 # include <QSvgGenerator>
 # include <QWheelEvent>
-# include <strstream>
 # include <cmath>
 #endif
 
+#include <App/Application.h>
+#include <App/Material.h>
 #include <Base/Console.h>
 #include <Base/Stream.h>
 #include <Gui/FileDialog.h>
@@ -85,26 +86,34 @@ QGVPage::QGVPage(ViewProviderPage *vp, QGraphicsScene* s, QWidget *parent)
     , pageTemplate(0)
     , m_renderer(Native)
     , drawBkg(true)
-    , pageGui(0)
+    , m_vpPage(0)
 {
     assert(vp);
-    pageGui = vp;
-    const char* name = vp->getPageObject()->getNameInDocument();
+    m_vpPage = vp;
+    const char* name = vp->getDrawPage()->getNameInDocument();
     setObjectName(QString::fromLocal8Bit(name));
 
     setScene(s);
+
+    setViewportUpdateMode(QGraphicsView::MinimalViewportUpdate);
     //setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
+    //setViewportUpdateMode(QGraphicsView::SmartViewportUpdate);
     setCacheMode(QGraphicsView::CacheBackground);
-    setTransformationAnchor(AnchorUnderMouse);
+    //setTransformationAnchor(AnchorUnderMouse);
+    //setTransformationAnchor(NoAnchor);
+    setTransformationAnchor(AnchorViewCenter);
+    setResizeAnchor(AnchorViewCenter);
+    setAlignment(Qt::AlignCenter);
 
     setDragMode(ScrollHandDrag);
     setCursor(QCursor(Qt::ArrowCursor));
     setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
 
-    bkgBrush = new QBrush(QColor::fromRgb(70,70,70));
+    bkgBrush = new QBrush(getBackgroundColor());
 
     resetCachedContent();
 }
+
 QGVPage::~QGVPage()
 {
     delete bkgBrush;
@@ -117,7 +126,7 @@ void QGVPage::drawBackground(QPainter *p, const QRectF &)
     if(!drawBkg)
         return;
 
-    if (!pageGui->getPageObject()) {
+    if (!m_vpPage->getDrawPage()) {
         //Base::Console().Log("TROUBLE - QGVP::drawBackground - no Page Object!\n");
         return;
     }
@@ -127,9 +136,9 @@ void QGVPage::drawBackground(QPainter *p, const QRectF &)
 
 
     p->setBrush(*bkgBrush);
-    p->drawRect(viewport()->rect());
+    p->drawRect(viewport()->rect().adjusted(-2,-2,2,2));   //just bigger than viewport to prevent artifacts
 
-    if(!pageGui) {
+    if(!m_vpPage) {
         return;
     }
 
@@ -138,9 +147,9 @@ void QGVPage::drawBackground(QPainter *p, const QRectF &)
     float pageWidth = 420,
           pageHeight = 297;
 
-    if ( pageGui->getPageObject()->hasValidTemplate() ) {
-        pageWidth = pageGui->getPageObject()->getPageWidth();
-        pageHeight = pageGui->getPageObject()->getPageHeight();
+    if ( m_vpPage->getDrawPage()->hasValidTemplate() ) {
+        pageWidth = m_vpPage->getDrawPage()->getPageWidth();
+        pageHeight = m_vpPage->getDrawPage()->getPageHeight();
     }
 
     // Draw the white page
@@ -318,7 +327,7 @@ void QGVPage::addDimToParent(QGIViewDimension* dim, QGIView* parent)
 
 QGIView * QGVPage::findView(App::DocumentObject *obj) const
 {
-  if(scene()) {
+  if(obj) {
     const std::vector<QGIView *> qviews = views;
     for(std::vector<QGIView *>::const_iterator it = qviews.begin(); it != qviews.end(); ++it) {
           TechDraw::DrawView *fview = (*it)->getViewObject();
@@ -473,8 +482,8 @@ void QGVPage::toggleHatch(bool enable)
 
 void QGVPage::saveSvg(QString filename)
 {
-    // TODO: We only have pageGui because constructor gets passed a view provider...
-    TechDraw::DrawPage *page( pageGui->getPageObject() );
+    // TODO: We only have m_vpPage because constructor gets passed a view provider...
+    TechDraw::DrawPage *page( m_vpPage->getDrawPage() );
 
     const QString docName( QString::fromUtf8(page->getDocument()->getName()) );
     const QString pageName( QString::fromUtf8(page->getNameInDocument()) );
@@ -545,10 +554,26 @@ void QGVPage::paintEvent(QPaintEvent *event)
 
 void QGVPage::wheelEvent(QWheelEvent *event)
 {
-    qreal factor = std::pow(1.2, -event->delta() / 240.0);
+//Delta is the distance that the wheel is rotated, in eighths of a degree.
+//positive indicates rotation forwards away from the user; negative backwards toward the user.
+//Most mouse types work in steps of 15 degrees, in which case the delta value is a multiple of 120; i.e., 120 units * 1/8 = 15 degrees.
+//1 click = 15 degrees.  15 degrees = 120 deltas.  delta/240 -> 1 click = 0.5 ==> factor = 1.2^0.5 = 1.095
+//                                                              1 click = -0.5 ==> factor = 1.2^-0.5 = 0.91
+//so to change wheel direction, multiply (event->delta() / 240.0) by +/-1
+    double mouseBase = 1.2;        //magic numbers. change for different mice?
+    double mouseAdjust = 240.0;
+
+    QPointF center = mapToScene(viewport()->rect().center());
+    qreal factor = std::pow(mouseBase, event->delta() / mouseAdjust);
     scale(factor, factor);
+
+    QPointF newCenter = mapToScene(viewport()->rect().center());
+    QPointF change = newCenter - center;
+    translate(change.x(), change.y());
+
     event->accept();
 }
+
 void QGVPage::enterEvent(QEvent *event)
 {
     QGraphicsView::enterEvent(event);
@@ -569,8 +594,16 @@ void QGVPage::mouseReleaseEvent(QMouseEvent *event)
 
 TechDraw::DrawPage* QGVPage::getDrawPage()
 {
-    return pageGui->getPageObject();
+    return m_vpPage->getDrawPage();
 }
 
+QColor QGVPage::getBackgroundColor()
+{
+    Base::Reference<ParameterGrp> hGrp = App::GetApplication().GetUserParameter()
+                                        .GetGroup("BaseApp")->GetGroup("Preferences")->GetGroup("Mod/TechDraw/Colors");
+    App::Color fcColor;
+    fcColor.setPackedValue(hGrp->GetUnsigned("Background", 0x70707000));
+    return fcColor.asValue<QColor>();
+}
 
 #include <Mod/TechDraw/Gui/moc_QGVPage.cpp>

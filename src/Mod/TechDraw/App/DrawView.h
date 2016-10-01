@@ -58,6 +58,7 @@ public:
     /// recalculate the Feature
     virtual App::DocumentObjectExecReturn *execute(void);
     virtual void onDocumentRestored();
+    virtual short mustExecute() const;
     //@}
 
     bool isInClip();
@@ -72,6 +73,8 @@ public:
     DrawPage* findParentPage() const;
     bool allowAutoPos() {return autoPos;};                //sb in DPGI??
     void setAutoPos(bool state) {autoPos = state;};
+    bool isMouseMove() {return mouseMove;};
+    void setMouseMove(bool state) {mouseMove = state;};
     virtual QRectF getRect() const;                       //must be overridden by derived class
     virtual double autoScale(double w, double h) const;
     virtual bool checkFit(DrawPage*) const;
@@ -80,6 +83,7 @@ protected:
     void onChanged(const App::Property* prop);
     std::string pageFeatName;
     bool autoPos;
+    bool mouseMove;
 
 private:
     static const char* ScaleTypeEnums[];

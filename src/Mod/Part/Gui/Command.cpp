@@ -94,7 +94,7 @@ CmdPartPickCurveNet::CmdPartPickCurveNet()
 
 void CmdPartPickCurveNet::activated(int iMsg)
 {
-
+    Q_UNUSED(iMsg);
 }
 
 //===========================================================================
@@ -116,6 +116,7 @@ CmdPartNewDoc::CmdPartNewDoc()
 
 void CmdPartNewDoc::activated(int iMsg)
 {
+    Q_UNUSED(iMsg);
     doCommand(Doc,"d = App.New()");
     updateActive();
 }
@@ -137,9 +138,9 @@ CmdPartBox2::CmdPartBox2()
     sPixmap       = "Part_Box";
 }
 
-
 void CmdPartBox2::activated(int iMsg)
 {
+    Q_UNUSED(iMsg);
     openCommand("Part Box Create");
     doCommand(Doc,"from FreeCAD import Base");
     doCommand(Doc,"import Part");
@@ -180,6 +181,7 @@ CmdPartBox3::CmdPartBox3()
 
 void CmdPartBox3::activated(int iMsg)
 {
+    Q_UNUSED(iMsg);
     openCommand("Part Box Create");
     doCommand(Doc,"from FreeCAD import Base");
     doCommand(Doc,"import Part");
@@ -220,6 +222,7 @@ CmdPartPrimitives::CmdPartPrimitives()
 
 void CmdPartPrimitives::activated(int iMsg)
 {
+    Q_UNUSED(iMsg);
     PartGui::TaskPrimitives* dlg = new PartGui::TaskPrimitives();
     Gui::Control().showDialog(dlg);
 }
@@ -273,6 +276,7 @@ CmdPartCut::CmdPartCut()
 
 void CmdPartCut::activated(int iMsg)
 {
+    Q_UNUSED(iMsg);
     std::vector<Gui::SelectionObject> Sel = getSelection().getSelectionEx(0, Part::Feature::getClassTypeId());
     if (Sel.size() != 2) {
         QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Wrong selection"),
@@ -350,6 +354,7 @@ CmdPartCommon::CmdPartCommon()
 
 void CmdPartCommon::activated(int iMsg)
 {
+    Q_UNUSED(iMsg);
     std::vector<Gui::SelectionObject> Sel = getSelection().getSelectionEx(0, Part::Feature::getClassTypeId());
 
     //test if selected object is a compound, and if it is, look how many children it has...
@@ -451,6 +456,7 @@ CmdPartFuse::CmdPartFuse()
 
 void CmdPartFuse::activated(int iMsg)
 {
+    Q_UNUSED(iMsg);
     std::vector<Gui::SelectionObject> Sel = getSelection().getSelectionEx(0, Part::Feature::getClassTypeId());
 
     //test if selected object is a compound, and if it is, look how many children it has...
@@ -767,6 +773,7 @@ CmdPartCompound::CmdPartCompound()
 
 void CmdPartCompound::activated(int iMsg)
 {
+    Q_UNUSED(iMsg);
     unsigned int n = getSelection().countObjectsOfType(Part::Feature::getClassTypeId());
     if (n < 1) {
         QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Wrong selection"),
@@ -817,6 +824,7 @@ CmdPartSection::CmdPartSection()
 
 void CmdPartSection::activated(int iMsg)
 {
+    Q_UNUSED(iMsg);
     std::vector<Gui::SelectionObject> Sel = getSelection().getSelectionEx(0, Part::Feature::getClassTypeId());
     if (Sel.size() != 2) {
         QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Wrong selection"),
@@ -863,6 +871,7 @@ CmdPartImport::CmdPartImport()
 
 void CmdPartImport::activated(int iMsg)
 {
+    Q_UNUSED(iMsg);
     QStringList filter;
     filter << QString::fromLatin1("STEP (*.stp *.step)");
     filter << QString::fromLatin1("STEP with colors (*.stp *.step)");
@@ -922,6 +931,7 @@ CmdPartExport::CmdPartExport()
 
 void CmdPartExport::activated(int iMsg)
 {
+    Q_UNUSED(iMsg);
     QStringList filter;
     filter << QString::fromLatin1("STEP (*.stp *.step)");
     filter << QString::fromLatin1("STEP with colors (*.stp *.step)");
@@ -968,6 +978,7 @@ CmdPartImportCurveNet::CmdPartImportCurveNet()
 
 void CmdPartImportCurveNet::activated(int iMsg)
 {
+    Q_UNUSED(iMsg);
     QStringList filter;
     filter << QString::fromLatin1("%1 (*.stp *.step *.igs *.iges *.brp *.brep)")
                  .arg(QObject::tr("All CAD Files"));
@@ -1014,9 +1025,10 @@ CmdPartMakeSolid::CmdPartMakeSolid()
 
 void CmdPartMakeSolid::activated(int iMsg)
 {
+    Q_UNUSED(iMsg);
     std::vector<App::DocumentObject*> objs = Gui::Selection().getObjectsOfType
         (Part::Feature::getClassTypeId());
-    doCommand(Doc, "import Part");
+    runCommand(Doc, "import Part");
     for (std::vector<App::DocumentObject*>::iterator it = objs.begin(); it != objs.end(); ++it) {
         const TopoDS_Shape& shape = static_cast<Part::Feature*>(*it)->Shape.getValue();
         if (!shape.IsNull()) {
@@ -1057,7 +1069,7 @@ void CmdPartMakeSolid::activated(int iMsg)
 
             try {
                 if (!str.isEmpty())
-                    doCommand(Doc, (const char*)str.toLatin1());
+                    runCommand(Doc, str.toLatin1());
             }
             catch (const Base::Exception& e) {
                 Base::Console().Error("Cannot convert %s because %s.\n",
@@ -1081,7 +1093,6 @@ DEF_STD_CMD_A(CmdPartReverseShape);
 CmdPartReverseShape::CmdPartReverseShape()
   :Command("Part_ReverseShape")
 {
-
     sAppModule    = "Part";
     sGroup        = QT_TR_NOOP("Part");
     sMenuText     = QT_TR_NOOP("Reverse shapes");
@@ -1092,9 +1103,10 @@ CmdPartReverseShape::CmdPartReverseShape()
 
 void CmdPartReverseShape::activated(int iMsg)
 {
+    Q_UNUSED(iMsg);
     std::vector<App::DocumentObject*> objs = Gui::Selection().getObjectsOfType
         (Part::Feature::getClassTypeId());
-    doCommand(Doc, "import Part");
+    runCommand(Doc, "import Part");
     for (std::vector<App::DocumentObject*>::iterator it = objs.begin(); it != objs.end(); ++it) {
         const TopoDS_Shape& shape = static_cast<Part::Feature*>(*it)->Shape.getValue();
         if (!shape.IsNull()) {
@@ -1111,7 +1123,7 @@ void CmdPartReverseShape::activated(int iMsg)
 
             try {
                 if (!str.isEmpty())
-                    doCommand(Doc, (const char*)str.toLatin1());
+                    runCommand(Doc, str.toLatin1());
             }
             catch (const Base::Exception& e) {
                 Base::Console().Error("Cannot convert %s because %s.\n",
@@ -1146,6 +1158,7 @@ CmdPartBoolean::CmdPartBoolean()
 
 void CmdPartBoolean::activated(int iMsg)
 {
+    Q_UNUSED(iMsg);
     Gui::TaskView::TaskDialog* dlg = Gui::Control().activeDialog();
     if (!dlg)
         dlg = new PartGui::TaskBooleanOperation();
@@ -1176,6 +1189,7 @@ CmdPartExtrude::CmdPartExtrude()
 
 void CmdPartExtrude::activated(int iMsg)
 {
+    Q_UNUSED(iMsg);
     Gui::Control().showDialog(new PartGui::TaskExtrusion());
 }
 
@@ -1202,6 +1216,7 @@ CmdPartMakeFace::CmdPartMakeFace()
 
 void CmdPartMakeFace::activated(int iMsg)
 {
+    Q_UNUSED(iMsg);
     std::vector<Part::Part2DObject*> sketches = Gui::Selection().getObjectsOfType<Part::Part2DObject>();
     openCommand("Make face");
 
@@ -1217,7 +1232,7 @@ void CmdPartMakeFace::activated(int iMsg)
 
         str << ")";
 
-        doCommand(Doc,str.str().c_str());
+        runCommand(Doc,str.str().c_str());
         commitCommand();
         updateActive();
     }
@@ -1252,6 +1267,7 @@ CmdPartRevolve::CmdPartRevolve()
 
 void CmdPartRevolve::activated(int iMsg)
 {
+    Q_UNUSED(iMsg);
     Gui::Control().showDialog(new PartGui::TaskRevolution());
 }
 
@@ -1279,6 +1295,7 @@ CmdPartFillet::CmdPartFillet()
 
 void CmdPartFillet::activated(int iMsg)
 {
+    Q_UNUSED(iMsg);
     Gui::Control().showDialog(new PartGui::TaskFilletEdges(0));
 }
 
@@ -1306,6 +1323,7 @@ CmdPartChamfer::CmdPartChamfer()
 
 void CmdPartChamfer::activated(int iMsg)
 {
+    Q_UNUSED(iMsg);
     Gui::Control().showDialog(new PartGui::TaskChamferEdges(0));
 }
 
@@ -1333,6 +1351,7 @@ CmdPartMirror::CmdPartMirror()
 
 void CmdPartMirror::activated(int iMsg)
 {
+    Q_UNUSED(iMsg);
     Gui::Control().showDialog(new PartGui::TaskMirroring());
 }
 
@@ -1360,6 +1379,7 @@ CmdPartCrossSections::CmdPartCrossSections()
 
 void CmdPartCrossSections::activated(int iMsg)
 {
+    Q_UNUSED(iMsg);
     Gui::TaskView::TaskDialog* dlg = Gui::Control().activeDialog();
     if (!dlg) {
         std::vector<App::DocumentObject*> obj = Gui::Selection().getObjectsOfType
@@ -1399,6 +1419,7 @@ CmdPartBuilder::CmdPartBuilder()
 
 void CmdPartBuilder::activated(int iMsg)
 {
+    Q_UNUSED(iMsg);
     Gui::Control().showDialog(new PartGui::TaskShapeBuilder());
 }
 
@@ -1427,6 +1448,7 @@ CmdPartLoft::CmdPartLoft()
 
 void CmdPartLoft::activated(int iMsg)
 {
+    Q_UNUSED(iMsg);
     Gui::Control().showDialog(new PartGui::TaskLoft());
 }
 
@@ -1455,6 +1477,7 @@ CmdPartSweep::CmdPartSweep()
 
 void CmdPartSweep::activated(int iMsg)
 {
+    Q_UNUSED(iMsg);
     Gui::Control().showDialog(new PartGui::TaskSweep());
 }
 
@@ -1474,8 +1497,8 @@ CmdPartOffset::CmdPartOffset()
 {
     sAppModule    = "Part";
     sGroup        = QT_TR_NOOP("Part");
-    sMenuText     = QT_TR_NOOP("Offset...");
-    sToolTipText  = QT_TR_NOOP("Utility to offset");
+    sMenuText     = QT_TR_NOOP("3D Offset...");
+    sToolTipText  = QT_TR_NOOP("Part_Offset: Utility to offset in 3D");
     sWhatsThis    = "Part_Offset";
     sStatusTip    = sToolTipText;
     sPixmap       = "Part_Offset";
@@ -1483,6 +1506,7 @@ CmdPartOffset::CmdPartOffset()
 
 void CmdPartOffset::activated(int iMsg)
 {
+    Q_UNUSED(iMsg);
     App::DocumentObject* shape = getSelection().getObjectsOfType(Part::Feature::getClassTypeId()).front();
     std::string offset = getUniqueObjectName("Offset");
 
@@ -1510,6 +1534,148 @@ bool CmdPartOffset::isActive(void)
     return (objectsSelected && !Gui::Control().activeDialog());
 }
 
+
+//===========================================================================
+// Part_Offset2D
+//===========================================================================
+
+DEF_STD_CMD_A(CmdPartOffset2D);
+
+CmdPartOffset2D::CmdPartOffset2D()
+  : Command("Part_Offset2D")
+{
+    sAppModule    = "Part";
+    sGroup        = QT_TR_NOOP("Part");
+    sMenuText     = QT_TR_NOOP("2D Offset...");
+    sToolTipText  = QT_TR_NOOP("Part_Offset2D: Utility to offset planar shapes");
+    sWhatsThis    = "Part_Offset2D";
+    sStatusTip    = sToolTipText;
+    sPixmap       = "Part_Offset2D";
+}
+
+void CmdPartOffset2D::activated(int iMsg)
+{
+    Q_UNUSED(iMsg);
+    App::DocumentObject* shape = getSelection().getObjectsOfType(Part::Feature::getClassTypeId()).front();
+    std::string offset = getUniqueObjectName("Offset2D");
+
+    openCommand("Make 2D Offset");
+    doCommand(Doc,"App.ActiveDocument.addObject(\"Part::Offset2D\",\"%s\")",offset.c_str());
+    doCommand(Doc,"App.ActiveDocument.%s.Source = App.ActiveDocument.%s" ,offset.c_str(), shape->getNameInDocument());
+    doCommand(Doc,"App.ActiveDocument.%s.Value = 1.0",offset.c_str());
+    updateActive();
+    //if (isActiveObjectValid())
+    //    doCommand(Gui,"Gui.ActiveDocument.hide(\"%s\")",shape->getNameInDocument());
+    doCommand(Gui,"Gui.ActiveDocument.setEdit('%s')",offset.c_str());
+
+    //commitCommand();
+    adjustCameraPosition();
+
+    copyVisual(offset.c_str(), "ShapeColor", shape->getNameInDocument());
+    copyVisual(offset.c_str(), "LineColor" , shape->getNameInDocument());
+    copyVisual(offset.c_str(), "PointColor", shape->getNameInDocument());
+}
+
+bool CmdPartOffset2D::isActive(void)
+{
+    Base::Type partid = Base::Type::fromName("Part::Feature");
+    bool objectsSelected = Gui::Selection().countObjectsOfType(partid) == 1;
+    return (objectsSelected && !Gui::Control().activeDialog());
+}
+
+//===========================================================================
+// Part_CompOffset (dropdown toolbar button for Offset features)
+//===========================================================================
+
+DEF_STD_CMD_ACL(CmdPartCompOffset);
+
+CmdPartCompOffset::CmdPartCompOffset()
+  : Command("Part_CompOffset")
+{
+    sAppModule      = "Part";
+    sGroup          = QT_TR_NOOP("Part");
+    sMenuText       = QT_TR_NOOP("Offset:");
+    sToolTipText    = QT_TR_NOOP("Tools to offset shapes (construct parallel shapes)");
+    sWhatsThis      = "Part_CompOffset";
+    sStatusTip      = sToolTipText;
+}
+
+void CmdPartCompOffset::activated(int iMsg)
+{
+    Gui::CommandManager &rcCmdMgr = Gui::Application::Instance->commandManager();
+    if (iMsg==0)
+        rcCmdMgr.runCommandByName("Part_Offset");
+    else if (iMsg==1)
+        rcCmdMgr.runCommandByName("Part_Offset2D");
+    else
+        return;
+
+    // Since the default icon is reset when enabing/disabling the command we have
+    // to explicitly set the icon of the used command.
+    Gui::ActionGroup* pcAction = qobject_cast<Gui::ActionGroup*>(_pcAction);
+    QList<QAction*> a = pcAction->actions();
+
+    assert(iMsg < a.size());
+    pcAction->setIcon(a[iMsg]->icon());
+}
+
+Gui::Action * CmdPartCompOffset::createAction(void)
+{
+    Gui::ActionGroup* pcAction = new Gui::ActionGroup(this, Gui::getMainWindow());
+    pcAction->setDropDownMenu(true);
+    applyCommandData(this->className(), pcAction);
+
+    QAction* cmd0 = pcAction->addAction(QString());
+    cmd0->setIcon(Gui::BitmapFactory().pixmap("Part_Offset"));
+    QAction* cmd1 = pcAction->addAction(QString());
+    cmd1->setIcon(Gui::BitmapFactory().pixmap("Part_Offset2D"));
+
+    _pcAction = pcAction;
+    languageChange();
+
+    pcAction->setIcon(cmd0->icon());
+    int defaultId = 0;
+    pcAction->setProperty("defaultAction", QVariant(defaultId));
+
+    return pcAction;
+}
+
+void CmdPartCompOffset::languageChange()
+{
+    Command::languageChange();
+
+    if (!_pcAction)
+        return;
+
+    Gui::CommandManager &rcCmdMgr = Gui::Application::Instance->commandManager();
+
+    Gui::ActionGroup* pcAction = qobject_cast<Gui::ActionGroup*>(_pcAction);
+    QList<QAction*> a = pcAction->actions();
+
+    Gui::Command* cmdOffset = rcCmdMgr.getCommandByName("Part_Offset");
+    if (cmdOffset) {
+        QAction* cmd0 = a[0];
+        cmd0->setText(QApplication::translate("Part_Offset", cmdOffset->getMenuText()));
+        cmd0->setToolTip(QApplication::translate("Part_Offset", cmdOffset->getToolTipText()));
+        cmd0->setStatusTip(QApplication::translate("Part_Offset", cmdOffset->getStatusTip()));
+    }
+
+    Gui::Command* cmdOffset2D = rcCmdMgr.getCommandByName("Part_Offset2D");
+    if (cmdOffset2D) {
+        QAction* cmd1 = a[1];
+        cmd1->setText(QApplication::translate("Part_Offset", cmdOffset2D->getMenuText()));
+        cmd1->setToolTip(QApplication::translate("Part_Offset", cmdOffset2D->getToolTipText()));
+        cmd1->setStatusTip(QApplication::translate("Part_Offset", cmdOffset2D->getStatusTip()));
+    }
+}
+
+bool CmdPartCompOffset::isActive(void)
+{
+    Base::Type partid = Base::Type::fromName("Part::Feature");
+    bool objectsSelected = Gui::Selection().countObjectsOfType(partid) == 1;
+    return (objectsSelected && !Gui::Control().activeDialog());
+}
+
 //===========================================================================
 // Part_Thickness
 //===========================================================================
@@ -1530,6 +1696,7 @@ CmdPartThickness::CmdPartThickness()
 
 void CmdPartThickness::activated(int iMsg)
 {
+    Q_UNUSED(iMsg);
     Gui::SelectionFilter faceFilter  ("SELECT Part::Feature SUBELEMENT Face COUNT 1..");
     if (!faceFilter.match()) {
         QMessageBox::warning(Gui::getMainWindow(),
@@ -1604,6 +1771,7 @@ CmdShapeInfo::CmdShapeInfo()
 
 void CmdShapeInfo::activated(int iMsg)
 {
+    Q_UNUSED(iMsg);
 #if 0
     static const char * const part_pipette[]={
         "32 32 17 1",
@@ -1703,6 +1871,7 @@ CmdPartRuledSurface::CmdPartRuledSurface()
 
 void CmdPartRuledSurface::activated(int iMsg)
 {
+    Q_UNUSED(iMsg);
     bool ok = false;
     TopoDS_Shape curve1, curve2;
     std::string link1, link2, obj1, obj2;
@@ -1818,6 +1987,7 @@ CmdCheckGeometry::CmdCheckGeometry()
 
 void CmdCheckGeometry::activated(int iMsg)
 {
+    Q_UNUSED(iMsg);
     Gui::TaskView::TaskDialog* dlg = Gui::Control().activeDialog();
     if (!dlg)
         dlg = new PartGui::TaskCheckGeometryDialog();
@@ -1850,6 +2020,7 @@ CmdColorPerFace::CmdColorPerFace()
 
 void CmdColorPerFace::activated(int iMsg)
 {
+    Q_UNUSED(iMsg);
     if (getActiveGuiDocument()->getInEdit())
         getActiveGuiDocument()->resetEdit();
     std::vector<App::DocumentObject*> sel = Gui::Selection().getObjectsOfType(Part::Feature::getClassTypeId());
@@ -1887,6 +2058,7 @@ CmdMeasureLinear::CmdMeasureLinear()
 
 void CmdMeasureLinear::activated(int iMsg)
 {
+  Q_UNUSED(iMsg);
   PartGui::goDimensionLinearRoot();
 }
 
@@ -1915,6 +2087,7 @@ CmdMeasureAngular::CmdMeasureAngular()
 
 void CmdMeasureAngular::activated(int iMsg)
 {
+  Q_UNUSED(iMsg);
   PartGui::goDimensionAngularRoot();
 }
 
@@ -1943,6 +2116,7 @@ CmdMeasureClearAll::CmdMeasureClearAll()
 
 void CmdMeasureClearAll::activated(int iMsg)
 {
+  Q_UNUSED(iMsg);
   PartGui::eraseAllDimensions();
 }
 
@@ -1971,6 +2145,7 @@ CmdMeasureToggleAll::CmdMeasureToggleAll()
 
 void CmdMeasureToggleAll::activated(int iMsg)
 {
+  Q_UNUSED(iMsg);
   ParameterGrp::handle group = App::GetApplication().GetUserParameter().
     GetGroup("BaseApp")->GetGroup("Preferences")->GetGroup("View");
   bool visibility = group->GetBool("DimensionsVisible", true);
@@ -2005,6 +2180,7 @@ CmdMeasureToggle3d::CmdMeasureToggle3d()
 
 void CmdMeasureToggle3d::activated(int iMsg)
 {
+  Q_UNUSED(iMsg);
   PartGui::toggle3d();
 }
 
@@ -2033,6 +2209,7 @@ CmdMeasureToggleDelta::CmdMeasureToggleDelta()
 
 void CmdMeasureToggleDelta::activated(int iMsg)
 {
+  Q_UNUSED(iMsg);
   PartGui::toggleDelta();
 }
 
@@ -2076,6 +2253,8 @@ void CreatePartCommands(void)
     rcCmdMgr.addCommand(new CmdPartLoft());
     rcCmdMgr.addCommand(new CmdPartSweep());
     rcCmdMgr.addCommand(new CmdPartOffset());
+    rcCmdMgr.addCommand(new CmdPartOffset2D());
+    rcCmdMgr.addCommand(new CmdPartCompOffset());
     rcCmdMgr.addCommand(new CmdPartThickness());
     rcCmdMgr.addCommand(new CmdCheckGeometry());
     rcCmdMgr.addCommand(new CmdColorPerFace());

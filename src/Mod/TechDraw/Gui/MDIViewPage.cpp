@@ -96,7 +96,7 @@ MDIViewPage::MDIViewPage(ViewProviderPage *pageVp, Gui::Document* doc, QWidget* 
   : Gui::MDIView(doc, parent),
     m_orientation(QPrinter::Landscape),
     m_paperSize(QPrinter::A4),
-    pageGui(pageVp),
+    m_vpPage(pageVp),
     m_frameState(true)
 {
 
@@ -145,11 +145,10 @@ MDIViewPage::MDIViewPage(ViewProviderPage *pageVp, Gui::Document* doc, QWidget* 
         this           , SLOT  (selectionChanged())
        );
 
-
      // A fresh page is added and we iterate through its collected children and add these to Canvas View  -MLP
      // if docobj is a featureviewcollection (ex orthogroup), add its child views. if there are ever children that have children,
      // we'll have to make this recursive. -WF
-    const std::vector<App::DocumentObject*> &grp = pageGui->getPageObject()->Views.getValues();
+    const std::vector<App::DocumentObject*> &grp = m_vpPage->getDrawPage()->Views.getValues();
     std::vector<App::DocumentObject*> childViews;
     for (std::vector<App::DocumentObject*>::const_iterator it = grp.begin();it != grp.end(); ++it) {
         attachView(*it);
@@ -165,12 +164,16 @@ MDIViewPage::MDIViewPage(ViewProviderPage *pageVp, Gui::Document* doc, QWidget* 
     //therefore we need to make sure parentage of the graphics representation is set properly. bit of a kludge.
     setDimensionGroups();
 
-    App::DocumentObject *obj = pageGui->getPageObject()->Template.getValue();
+    App::DocumentObject *obj = m_vpPage->getDrawPage()->Template.getValue();
     auto pageTemplate( dynamic_cast<TechDraw::DrawTemplate *>(obj) );
     if( pageTemplate ) {
+        //make sceneRect 1 pagesize bigger in every direction
+        double width  =  pageTemplate->Width.getValue();
+        double height =  pageTemplate->Height.getValue();
+        m_view->scene()->setSceneRect(QRectF(-width,-2.0 * height,3.0*width,3.0*height));
         attachTemplate(pageTemplate);
+        viewAll();
     }
-
 }
 
 
@@ -250,11 +253,9 @@ void MDIViewPage::contextMenuEvent(QContextMenuEvent *event)
 
 void MDIViewPage::attachTemplate(TechDraw::DrawTemplate *obj)
 {
-    //why doesn't setting the template set the papersize???
     m_view->setPageTemplate(obj);
     double width  =  obj->Width.getValue();
     double height =  obj->Height.getValue();
-    m_view->scene()->setSceneRect(QRectF(-1.,-height,width+1.,height));         //the +/- 1 is because of the way the template is define???
     m_paperSize = getPaperSize(int(round(width)),int(round(height)));
     if (width > height) {
         m_orientation = QPrinter::Landscape;
@@ -263,6 +264,23 @@ void MDIViewPage::attachTemplate(TechDraw::DrawTemplate *obj)
     }
 }
 
+QPointF MDIViewPage::getTemplateCenter(TechDraw::DrawTemplate *obj)
+{
+    double cx  =  obj->Width.getValue()/2.0;
+    double cy =  -obj->Height.getValue()/2.0;
+    QPointF result(cx,cy);
+    return result;
+}
+
+void MDIViewPage::centerOnPage(void)
+{
+    App::DocumentObject *obj = m_vpPage->getDrawPage()->Template.getValue();
+    auto pageTemplate( dynamic_cast<TechDraw::DrawTemplate *>(obj) );
+    if( pageTemplate ) {
+        QPointF viewCenter = getTemplateCenter(pageTemplate);
+        m_view->centerOn(viewCenter);
+    }
+}
 
 bool MDIViewPage::attachView(App::DocumentObject *obj)
 {
@@ -312,14 +330,14 @@ bool MDIViewPage::attachView(App::DocumentObject *obj)
 
 void MDIViewPage::updateTemplate(bool forceUpdate)
 {
-    App::DocumentObject *templObj = pageGui->getPageObject()->Template.getValue();
+    App::DocumentObject *templObj = m_vpPage->getDrawPage()->Template.getValue();
     // TODO: what if template has been deleted? templObj will be NULL. segfault?
     if (!templObj) {
-        Base::Console().Log("INFO - MDIViewPage::updateTemplate - Page: %s has NO template!!\n",pageGui->getPageObject()->getNameInDocument());
+        Base::Console().Log("INFO - MDIViewPage::updateTemplate - Page: %s has NO template!!\n",m_vpPage->getDrawPage()->getNameInDocument());
         return;
     }
 
-    if(pageGui->getPageObject()->Template.isTouched() || templObj->isTouched()) {
+    if(m_vpPage->getDrawPage()->Template.isTouched() || templObj->isTouched()) {
         // Template is touched so update
 
         if(forceUpdate ||
@@ -338,10 +356,9 @@ void MDIViewPage::updateTemplate(bool forceUpdate)
 
 void MDIViewPage::updateDrawing(bool forceUpdate)
 {
-    // We cannot guarantee if the number of graphical representations (QGIVxxxx) have changed so check the number
-    // Why?
+   // We cannot guarantee if the number of graphical representations (QGIVxxxx) have changed so check the number (MLP)
     const std::vector<QGIView *> &graphicsList = m_view->getViews();
-    const std::vector<App::DocumentObject*> &pageChildren  = pageGui->getPageObject()->Views.getValues();
+    const std::vector<App::DocumentObject*> &pageChildren  = m_vpPage->getDrawPage()->Views.getValues();
 
     // Count total # DocumentObjects in Page
     unsigned int docObjCount = 0;
@@ -463,7 +480,7 @@ bool MDIViewPage::orphanExists(const char *viewName, const std::vector<App::Docu
 }
 
 
-bool MDIViewPage::onMsg(const char *pMsg, const char **ppReturn)
+bool MDIViewPage::onMsg(const char *pMsg, const char **)
 {
     Gui::Document *doc(getGuiDocument());
 
@@ -796,7 +813,8 @@ void MDIViewPage::setRenderer(QAction *action)
 
 void MDIViewPage::viewAll()
 {
-    m_view->fitInView(m_view->scene()->sceneRect(), Qt::KeepAspectRatio);
+    //m_view->fitInView(m_view->scene()->sceneRect(), Qt::KeepAspectRatio);
+    m_view->fitInView(m_view->scene()->itemsBoundingRect(), Qt::KeepAspectRatio);
 }
 
 

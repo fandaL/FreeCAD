@@ -102,6 +102,7 @@ protected:
 
     static QColor SelectColor;
     static QColor PreselectColor;
+    QColor getBackgroundColor();
 
     QGITemplate *pageTemplate;
     std::vector<QGIView *> views;
@@ -112,7 +113,7 @@ private:
     bool drawBkg;
     QBrush* bkgBrush;
     QImage m_image;
-    ViewProviderPage *pageGui;
+    ViewProviderPage *m_vpPage;
 };
 
 } // namespace MDIViewPageGui

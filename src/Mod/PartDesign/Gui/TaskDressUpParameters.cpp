@@ -66,7 +66,7 @@ TaskDressUpParameters::~TaskDressUpParameters()
     Gui::Selection().rmvSelectionGate();
 }
 
-const bool TaskDressUpParameters::referenceSelected(const Gui::SelectionChanges& msg)
+bool TaskDressUpParameters::referenceSelected(const Gui::SelectionChanges& msg)
 {
     if ((msg.Type == Gui::SelectionChanges::AddSelection) && (
                 (selectionMode == refAdd) || (selectionMode == refRemove))) {
@@ -219,7 +219,7 @@ bool TaskDlgDressUpParameters::accept()
     for (std::vector<std::string>::const_iterator it = refs.begin(); it != refs.end(); ++it)
         str << "\"" << *it << "\",";
     str << "])";
-    Gui::Command::doCommand(Gui::Command::Doc,str.str().c_str());
+    Gui::Command::runCommand(Gui::Command::Doc,str.str().c_str());
 
     return TaskDlgFeatureParameters::accept();
 }

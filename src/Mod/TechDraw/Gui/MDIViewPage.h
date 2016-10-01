@@ -29,6 +29,7 @@
 
 #include <QPrinter>
 #include <QGraphicsScene>
+#include <QPointF>
 
 QT_BEGIN_NAMESPACE
 class QAction;
@@ -82,6 +83,10 @@ public:
 
     QGraphicsScene* m_scene;
 
+    QPointF getTemplateCenter(TechDraw::DrawTemplate *obj);
+    void centerOnPage(void);
+
+
 public Q_SLOTS:
     void setRenderer(QAction *action);
     void viewAll();
@@ -116,7 +121,7 @@ private:
     QString m_currentPath;
     QPrinter::Orientation m_orientation;
     QPrinter::PaperSize m_paperSize;
-    ViewProviderPage *pageGui;
+    ViewProviderPage *m_vpPage;
 
     bool m_frameState;
 

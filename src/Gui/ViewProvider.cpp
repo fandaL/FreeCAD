@@ -123,15 +123,18 @@ void ViewProvider::finishEditing()
 
 bool ViewProvider::setEdit(int ModNum)
 {
+    Q_UNUSED(ModNum); 
     return true;
 }
 
 void ViewProvider::unsetEdit(int ModNum)
 {
+    Q_UNUSED(ModNum); 
 }
 
 void ViewProvider::setEditViewer(View3DInventorViewer*, int ModNum)
 {
+    Q_UNUSED(ModNum); 
 }
 
 void ViewProvider::unsetEditViewer(View3DInventorViewer*)
@@ -150,8 +153,7 @@ void ViewProvider::setUpdatesEnabled (bool enable)
 
 void highlight(const HighlightMode& high)
 {
-
-
+    Q_UNUSED(high); 
 }
 
 void ViewProvider::eventCallback(void * ud, SoEventCallback * node)
@@ -471,4 +473,30 @@ std::vector<Base::Vector3d> ViewProvider::getModelPoints(const SoPickedPoint* pp
     const SbVec3f& vec = pp->getPoint();
     pts.push_back(Base::Vector3d(vec[0],vec[1],vec[2]));
     return pts;
+}
+
+bool ViewProvider::keyPressed(bool pressed, int key)
+{
+    (void)pressed;
+    (void)key;
+    return false;
+}
+
+bool ViewProvider::mouseMove(const SbVec2s &cursorPos,
+                             View3DInventorViewer* viewer)
+{
+    (void)cursorPos;
+    (void)viewer;
+    return false;
+}
+
+bool ViewProvider::mouseButtonPressed(int button, bool pressed,
+                                      const SbVec2s &cursorPos,
+                                      const View3DInventorViewer* viewer)
+{
+    (void)button;
+    (void)pressed;
+    (void)cursorPos;
+    (void)viewer;
+    return false;
 }

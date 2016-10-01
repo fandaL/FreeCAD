@@ -1453,6 +1453,32 @@ PyObject* TopoShapePy::makeOffsetShape(PyObject *args, PyObject *keywds)
     }
 }
 
+PyObject* TopoShapePy::makeOffset2D(PyObject *args, PyObject *keywds)
+{
+    static char *kwlist[] = {"offset", "join", "fill", "openResult", "intersection", NULL};
+    double offset;
+    PyObject* fill = Py_False;
+    PyObject* openResult = Py_False;
+    PyObject* inter = Py_False;
+    short join = 0;
+    if (!PyArg_ParseTupleAndKeywords(args, keywds, "d|hO!O!O!", kwlist,
+        &offset,
+        &join,
+        &(PyBool_Type), &fill,
+        &(PyBool_Type), &openResult,
+        &(PyBool_Type), &inter))
+        return 0;
+
+    try {
+        TopoDS_Shape resultShape = this->getTopoShapePtr()->makeOffset2D(offset, join,
+            PyObject_IsTrue(fill) ? true : false,
+            PyObject_IsTrue(openResult) ? true : false,
+            PyObject_IsTrue(inter) ? true : false);
+        return new_reference_to(shape2pyshape(resultShape));
+    }
+    PY_CATCH_OCC;
+}
+
 PyObject*  TopoShapePy::reverse(PyObject *args)
 {
     if (!PyArg_ParseTuple(args, ""))
@@ -1799,19 +1825,19 @@ PyObject* TopoShapePy::getElement(PyObject *args)
 
     try {
         if (name.size() > 4 && name.substr(0,4) == "Face" && name[4]>=48 && name[4]<=57) {
-            std::auto_ptr<Part::ShapeSegment> s(static_cast<Part::ShapeSegment*>
+            std::unique_ptr<Part::ShapeSegment> s(static_cast<Part::ShapeSegment*>
                 (getTopoShapePtr()->getSubElementByName(input)));
             TopoDS_Shape Shape = s->Shape;
             return new TopoShapeFacePy(new TopoShape(Shape));
         }
         else if (name.size() > 4 && name.substr(0,4) == "Edge" && name[4]>=48 && name[4]<=57) {
-            std::auto_ptr<Part::ShapeSegment> s(static_cast<Part::ShapeSegment*>
+            std::unique_ptr<Part::ShapeSegment> s(static_cast<Part::ShapeSegment*>
                 (getTopoShapePtr()->getSubElementByName(input)));
             TopoDS_Shape Shape = s->Shape;
             return new TopoShapeEdgePy(new TopoShape(Shape));
         }
         else if (name.size() > 6 && name.substr(0,6) == "Vertex" && name[6]>=48 && name[6]<=57) {
-            std::auto_ptr<Part::ShapeSegment> s(static_cast<Part::ShapeSegment*>
+            std::unique_ptr<Part::ShapeSegment> s(static_cast<Part::ShapeSegment*>
                 (getTopoShapePtr()->getSubElementByName(input)));
             TopoDS_Shape Shape = s->Shape;
             return new TopoShapeVertexPy(new TopoShape(Shape));
@@ -1890,6 +1916,7 @@ PyObject* TopoShapePy::proximity(PyObject *args)
     //return Py_BuildValue("OO", overlappss1, overlappss2); //subshapes
     return Py_BuildValue("OO", overlappssindex1, overlappssindex2); //face indexes
 #else
+    (void)args;
     PyErr_SetString(PyExc_NotImplementedError, "proximity requires OCCT >= 6.8.1");
     return 0;
 #endif
@@ -2361,19 +2388,19 @@ PyObject *TopoShapePy::getCustomAttributes(const char* attr) const
     std::string name(attr);
     try {
         if (name.size() > 4 && name.substr(0,4) == "Face" && name[4]>=48 && name[4]<=57) {
-            std::auto_ptr<Part::ShapeSegment> s(static_cast<Part::ShapeSegment*>
+            std::unique_ptr<Part::ShapeSegment> s(static_cast<Part::ShapeSegment*>
                 (getTopoShapePtr()->getSubElementByName(attr)));
             TopoDS_Shape Shape = s->Shape;
             return new TopoShapeFacePy(new TopoShape(Shape));
         }
         else if (name.size() > 4 && name.substr(0,4) == "Edge" && name[4]>=48 && name[4]<=57) {
-            std::auto_ptr<Part::ShapeSegment> s(static_cast<Part::ShapeSegment*>
+            std::unique_ptr<Part::ShapeSegment> s(static_cast<Part::ShapeSegment*>
                 (getTopoShapePtr()->getSubElementByName(attr)));
             TopoDS_Shape Shape = s->Shape;
             return new TopoShapeEdgePy(new TopoShape(Shape));
         }
         else if (name.size() > 6 && name.substr(0,6) == "Vertex" && name[6]>=48 && name[6]<=57) {
-            std::auto_ptr<Part::ShapeSegment> s(static_cast<Part::ShapeSegment*>
+            std::unique_ptr<Part::ShapeSegment> s(static_cast<Part::ShapeSegment*>
                 (getTopoShapePtr()->getSubElementByName(attr)));
             TopoDS_Shape Shape = s->Shape;
             return new TopoShapeVertexPy(new TopoShape(Shape));
@@ -2387,7 +2414,7 @@ PyObject *TopoShapePy::getCustomAttributes(const char* attr) const
     return 0;
 }
 
-int TopoShapePy::setCustomAttributes(const char* attr, PyObject *obj)
+int TopoShapePy::setCustomAttributes(const char* , PyObject *)
 {
     return 0; 
 }

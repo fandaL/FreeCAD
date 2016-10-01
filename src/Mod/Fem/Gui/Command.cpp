@@ -26,7 +26,7 @@
 # include <Standard_math.hxx>
 # include <QApplication>
 # include <QMessageBox>
-#include <QAction>
+# include <QAction>
 #endif
 
 #include <Inventor/nodes/SoEventCallback.h>
@@ -58,7 +58,6 @@
 #include <Mod/Part/App/PartFeature.h>
 #include <Mod/Fem/App/FemMeshObject.h>
 #include <Mod/Fem/App/FemSetNodesObject.h>
-#include <strstream>
 #include <Mod/Fem/App/FemConstraint.h>
 #include <Mod/Fem/App/FemAnalysis.h>
 #include "ActiveAnalysisObserver.h"
@@ -115,7 +114,7 @@ CmdFemCreateAnalysis::CmdFemCreateAnalysis()
     sPixmap         = "fem-analysis";
 }
 
-void CmdFemCreateAnalysis::activated(int iMsg)
+void CmdFemCreateAnalysis::activated(int)
 {
 #ifndef FCWithNetgen
     QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Wrong selection"),
@@ -177,7 +176,7 @@ CmdFemAddPart::CmdFemAddPart()
     sPixmap         = "fem-add-fem-mesh";
 }
 
-void CmdFemAddPart::activated(int iMsg)
+void CmdFemAddPart::activated(int)
 {
 #ifndef FCWithNetgen
     QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Wrong selection"),
@@ -240,7 +239,7 @@ CmdFemCreateSolver::CmdFemCreateSolver()
     sPixmap         = "fem-solver";
 }
 
-void CmdFemCreateSolver::activated(int iMsg)
+void CmdFemCreateSolver::activated(int)
 {
 #ifndef FCWithNetgen
     QMessageBox::warning(Gui::getMainWindow(), QObject::tr("Wrong selection"),
@@ -285,7 +284,7 @@ CmdFemConstraintBearing::CmdFemConstraintBearing()
     sPixmap         = "fem-constraint-bearing";
 }
 
-void CmdFemConstraintBearing::activated(int iMsg)
+void CmdFemConstraintBearing::activated(int)
 {
     Fem::FemAnalysis        *Analysis;
 
@@ -326,7 +325,7 @@ CmdFemConstraintFixed::CmdFemConstraintFixed()
     sPixmap         = "fem-constraint-fixed";
 }
 
-void CmdFemConstraintFixed::activated(int iMsg)
+void CmdFemConstraintFixed::activated(int)
 {
     Fem::FemAnalysis        *Analysis;
 
@@ -368,7 +367,7 @@ CmdFemConstraintPlaneRotation::CmdFemConstraintPlaneRotation()
     sPixmap         = "fem-constraint-planerotation";
 }
 
-void CmdFemConstraintPlaneRotation::activated(int iMsg)
+void CmdFemConstraintPlaneRotation::activated(int)
 {
     Fem::FemAnalysis        *Analysis;
 
@@ -409,7 +408,7 @@ CmdFemConstraintContact::CmdFemConstraintContact()
     sPixmap         = "fem-constraint-contact";
 }
 
-void CmdFemConstraintContact::activated(int iMsg)
+void CmdFemConstraintContact::activated(int)
 {
     Fem::FemAnalysis        *Analysis;
 
@@ -439,6 +438,50 @@ bool CmdFemConstraintContact::isActive(void)
 }
 
 //=====================================================================================
+DEF_STD_CMD_A(CmdFemConstraintTransform);
+
+CmdFemConstraintTransform::CmdFemConstraintTransform()
+  : Command("Fem_ConstraintTransform")
+{
+    sAppModule      = "Fem";
+    sGroup          = QT_TR_NOOP("Fem");
+    sMenuText       = QT_TR_NOOP("Create FEM transform constraint");
+    sToolTipText    = QT_TR_NOOP("Create FEM constraint for transforming a face");
+    sWhatsThis      = "Fem_ConstraintTransform";
+    sStatusTip      = sToolTipText;
+    sPixmap         = "fem-constraint-transform";
+}
+
+void CmdFemConstraintTransform::activated(int iMsg)
+{
+    Fem::FemAnalysis        *Analysis;
+
+    if(getConstraintPrerequisits(&Analysis))
+        return;
+
+    std::string FeatName = getUniqueObjectName("FemConstraintTransform");
+
+    openCommand("Make FEM constraint transform on face");
+    doCommand(Doc,"App.activeDocument().addObject(\"Fem::ConstraintTransform\",\"%s\")",FeatName.c_str());
+    doCommand(Doc,"App.activeDocument().%s.X_rot = 0.0",FeatName.c_str());
+    doCommand(Doc,"App.activeDocument().%s.Y_rot = 0.0",FeatName.c_str());
+    doCommand(Doc,"App.activeDocument().%s.Z_rot = 0.0",FeatName.c_str());
+    doCommand(Doc,"App.activeDocument().%s.Scale = 1",FeatName.c_str());
+    doCommand(Doc,"App.activeDocument().%s.Member = App.activeDocument().%s.Member + [App.activeDocument().%s]",
+                             Analysis->getNameInDocument(),Analysis->getNameInDocument(),FeatName.c_str());
+
+    doCommand(Doc,"%s",gethideMeshShowPartStr(FeatName).c_str()); //OvG: Hide meshes and show parts
+    
+    updateActive();
+
+    doCommand(Gui,"Gui.activeDocument().setEdit('%s')",FeatName.c_str());
+}
+
+bool CmdFemConstraintTransform::isActive(void)
+{
+    return FemGui::ActiveAnalysisObserver::instance()->hasActiveObject();
+}
+//=====================================================================================
 DEF_STD_CMD_A(CmdFemConstraintHeatflux);
 
 CmdFemConstraintHeatflux::CmdFemConstraintHeatflux()
@@ -453,7 +496,7 @@ CmdFemConstraintHeatflux::CmdFemConstraintHeatflux()
     sPixmap         = "fem-constraint-heatflux";
 }
 
-void CmdFemConstraintHeatflux::activated(int iMsg)
+void CmdFemConstraintHeatflux::activated(int)
 {
     Fem::FemAnalysis        *Analysis;
 
@@ -497,7 +540,7 @@ CmdFemConstraintForce::CmdFemConstraintForce()
     sPixmap         = "fem-constraint-force";
 }
 
-void CmdFemConstraintForce::activated(int iMsg)
+void CmdFemConstraintForce::activated(int)
 {
     Fem::FemAnalysis        *Analysis;
 
@@ -543,7 +586,7 @@ CmdFemConstraintFluidBoundary::CmdFemConstraintFluidBoundary()
     sPixmap         = "fem-constraint-fluid-boundary";
 }
 
-void CmdFemConstraintFluidBoundary::activated(int iMsg)
+void CmdFemConstraintFluidBoundary::activated(int)
 {
     Fem::FemAnalysis        *Analysis;
 
@@ -587,7 +630,7 @@ CmdFemConstraintPressure::CmdFemConstraintPressure()
     sPixmap         = "fem-constraint-pressure";
 }
 
-void CmdFemConstraintPressure::activated(int iMsg)
+void CmdFemConstraintPressure::activated(int)
 {
     Fem::FemAnalysis        *Analysis;
 
@@ -632,7 +675,7 @@ CmdFemConstraintGear::CmdFemConstraintGear()
     sPixmap         = "fem-constraint-gear";
 }
 
-void CmdFemConstraintGear::activated(int iMsg)
+void CmdFemConstraintGear::activated(int)
 {
     Fem::FemAnalysis        *Analysis;
 
@@ -673,7 +716,7 @@ CmdFemConstraintPulley::CmdFemConstraintPulley()
     sPixmap         = "fem-constraint-pulley";
 }
 
-void CmdFemConstraintPulley::activated(int iMsg)
+void CmdFemConstraintPulley::activated(int)
 {
     Fem::FemAnalysis        *Analysis;
 
@@ -718,7 +761,7 @@ CmdFemConstraintDisplacement::CmdFemConstraintDisplacement()
     sPixmap         = "fem-constraint-displacement";
 }
 
-void CmdFemConstraintDisplacement::activated(int iMsg)
+void CmdFemConstraintDisplacement::activated(int)
 {
     Fem::FemAnalysis        *Analysis;
 
@@ -761,7 +804,7 @@ CmdFemConstraintTemperature::CmdFemConstraintTemperature()
     sPixmap         = "fem-constraint-temperature";
 }
 
-void CmdFemConstraintTemperature::activated(int iMsg)
+void CmdFemConstraintTemperature::activated(int)
 {
     Fem::FemAnalysis        *Analysis;
 
@@ -804,7 +847,7 @@ CmdFemConstraintInitialTemperature::CmdFemConstraintInitialTemperature()
     sPixmap         = "fem-constraint-InitialTemperature";
 }
 
-void CmdFemConstraintInitialTemperature::activated(int iMsg)
+void CmdFemConstraintInitialTemperature::activated(int)
 {
     Fem::FemAnalysis        *Analysis;
 
@@ -935,7 +978,7 @@ CmdFemDefineNodesSet::CmdFemDefineNodesSet()
     sPixmap       = "fem-fem-mesh-create-node-by-poly";
 }
 
-void CmdFemDefineNodesSet::activated(int iMsg)
+void CmdFemDefineNodesSet::activated(int)
 {
     std::vector<App::DocumentObject*> docObj = Gui::Selection().getObjectsOfType(Fem::FemMeshObject::getClassTypeId());
 
@@ -992,7 +1035,7 @@ CmdFemCreateNodesSet::CmdFemCreateNodesSet()
     sPixmap         = "fem-fem-mesh-create-node-by-poly";
 }
 
-void CmdFemCreateNodesSet::activated(int iMsg)
+void CmdFemCreateNodesSet::activated(int)
 {
     Gui::SelectionFilter ObjectFilter("SELECT Fem::FemSetNodesObject COUNT 1");
     Gui::SelectionFilter FemMeshFilter("SELECT Fem::FemMeshObject COUNT 1");
@@ -1070,7 +1113,7 @@ CmdFemPostCreateClipFilter::CmdFemPostCreateClipFilter()
     sPixmap         = "fem-clip";
 }
 
-void CmdFemPostCreateClipFilter::activated(int iMsg)
+void CmdFemPostCreateClipFilter::activated(int)
 {
     setupFilter(this, "Clip");
 }
@@ -1094,7 +1137,7 @@ CmdFemPostCreateScalarClipFilter::CmdFemPostCreateScalarClipFilter()
     sPixmap         = "fem-clip-scalar";
 }
 
-void CmdFemPostCreateScalarClipFilter::activated(int iMsg)
+void CmdFemPostCreateScalarClipFilter::activated(int)
 {
     setupFilter(this, "ScalarClip");
 }
@@ -1120,7 +1163,7 @@ CmdFemPostWarpVectorFilter::CmdFemPostWarpVectorFilter()
     sPixmap         = "fem-warp";
 }
 
-void CmdFemPostWarpVectorFilter::activated(int iMsg)
+void CmdFemPostWarpVectorFilter::activated(int)
 {
     setupFilter(this, "WarpVector");
 }
@@ -1144,7 +1187,7 @@ CmdFemPostCutFilter::CmdFemPostCutFilter()
     sPixmap         = "fem-cut";
 }
 
-void CmdFemPostCutFilter::activated(int iMsg)
+void CmdFemPostCutFilter::activated(int)
 {
     setupFilter(this, "Cut");
 }
@@ -1354,7 +1397,7 @@ CmdFemPostPipelineFromResult::CmdFemPostPipelineFromResult()
     sPixmap         = "fem-data";
 }
 
-void CmdFemPostPipelineFromResult::activated(int iMsg)
+void CmdFemPostPipelineFromResult::activated(int)
 {
     Gui::SelectionFilter ResultFilter("SELECT Fem::FemResultObject COUNT 1");
 
@@ -1410,6 +1453,7 @@ void CreateFemCommands(void)
     rcCmdMgr.addCommand(new CmdFemConstraintPlaneRotation());
     rcCmdMgr.addCommand(new CmdFemConstraintContact());
     rcCmdMgr.addCommand(new CmdFemConstraintFluidBoundary());
+    rcCmdMgr.addCommand(new CmdFemConstraintTransform());
 #ifdef FC_USE_VTK
     rcCmdMgr.addCommand(new CmdFemPostCreateClipFilter);
     rcCmdMgr.addCommand(new CmdFemPostCreateScalarClipFilter);

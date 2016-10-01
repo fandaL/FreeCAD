@@ -32,14 +32,14 @@
 #include <QPainter>
 #endif
 
-#include "QGIView.h"
 #include "QGIArrow.h"
 
 using namespace TechDrawGui;
 
 QGIArrow::QGIArrow() :
     m_fill(Qt::SolidPattern),
-    m_size(5.0)
+    m_size(5.0),
+    m_style(0)
 {
     isFlipped = false;
     m_brush.setStyle(m_fill);
@@ -50,30 +50,6 @@ QGIArrow::QGIArrow() :
     setFlag(QGraphicsItem::ItemIsMovable, false);
 }
 
-//QPainterPath QGIArrow::shape() const
-//{
-//    return path();
-//}
-
-//void QGIArrow::setHighlighted(bool state)
-//{
-//    QPen myPen = pen();
-//    QBrush myBrush = brush();
-//    if(state) {
-//        myPen.setColor(Qt::blue);
-//        myBrush.setColor(Qt::blue);
-//    } else {
-//        myPen.setColor(Qt::black);
-//        myBrush.setColor(Qt::black);
-//    }
-//    setBrush(myBrush);
-//    setPen(myPen);
-//}
-
-//QVariant QGIArrow::itemChange(GraphicsItemChange change, const QVariant &value)
-//{
-//    return QGraphicsPathItem::itemChange(change, value);
-//}
 
 void QGIArrow::flip(bool state) {
     isFlipped = state;
