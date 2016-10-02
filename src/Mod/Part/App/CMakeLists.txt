@@ -282,6 +282,12 @@ SET(Part_SRCS
     OCCError.h
     FT2FC.cpp
     FT2FC.h
+    FaceMaker.cpp
+    FaceMaker.h
+    FaceMakerCheese.cpp
+    FaceMakerCheese.h
+    FaceMakerBullseye.cpp
+    FaceMakerBullseye.h
 )
 
 SET(Part_Scripts
