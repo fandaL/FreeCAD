@@ -24,6 +24,7 @@ import FemMeshTools
 import FreeCAD
 import os
 import string
+from platform import system
 
 __title__ = "FreeCAD .inp file reader"
 __author__ = "Frantisek Loeffelmann "
@@ -77,7 +78,17 @@ def read_inp(file_name):
             if line[:8].upper() == "*INCLUDE":
                 start = 1 + line.index("=")
                 include = line[start:].strip().strip('"')
-                f_include = pyopen(include, "r")
+                try:
+                    f_include = pyopen(include, "r")
+                except IOError:
+                    path = os.path.split(file_name)[0]
+                    if system() == "Linux":
+                        path += "/"
+                    elif system() == "Windows":
+                        path += "\\"
+                    else:
+                        path += "/"
+                    f_include = pyopen(path + include, "r")
                 continue
             read_node = False
             elm_category = []
