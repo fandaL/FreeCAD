@@ -4638,12 +4638,12 @@ class Point(Creator):
                 commitlist = []
                 if Draft.getParam("UsePartPrimitives",False):
                     # using
-                    commitlist.append(translate("draft","Create Point"),
+                    commitlist.append((translate("draft","Create Point"),
                                         ['point = FreeCAD.ActiveDocument.addObject("Part::Vertex","Point")',
                                          'point.X = '+str(self.stack[0][0]),
                                          'point.Y = '+str(self.stack[0][1]),
                                          'point.Z = '+str(self.stack[0][2]),
-                                         'Draft.autogroup(point)'])
+                                         'Draft.autogroup(point)']))
                 else:
                     # building command string
                     FreeCADGui.addModule("Draft")
